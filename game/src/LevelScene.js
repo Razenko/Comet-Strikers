@@ -13,6 +13,8 @@ export default class LevelScene extends Phaser.Scene {
         this.asteroids = [];
         this.level = level;
         this.alive = true;
+        this.lives = 3;
+        this.invulnerable = false;
         //this.util = new Util();
     }
 
@@ -64,17 +66,25 @@ export default class LevelScene extends Phaser.Scene {
 
             }
 
+            if (this.space.isDown) {
+                this.ship.Fire()
+            } else {
+                this.ship.StopFire();
+            }
+
             this.ship.update();
 
             for (let i = 0; i < this.asteroids.length; i++) {
                 this.asteroids[i].update();
-                this.physics.world.collide(this.ship.getPlayerShip(), this.asteroids[i].getCelestialObject(), this.PlayerKilled, null, this);
+                if (this.invulnerable) {
+                    this.physics.world.collide(this.ship.getPlayerShip(), this.asteroids[i].getCelestialObject(), null, null, this);
+                } else {
+                    this.physics.world.collide(this.ship.getPlayerShip(), this.asteroids[i].getCelestialObject(), this.PlayerKilled, null, this);
+                }
 
             }
 
-            if (this.space.isDown) {
-                console.log("Fire!");
-            }
+
         }
         else {
             for (let i = 0; i < this.asteroids.length; i++) {
@@ -85,7 +95,38 @@ export default class LevelScene extends Phaser.Scene {
     }
 
     PlayerKilled() {
+        // let respawntimer = this.time.addEvent({
+        //     delay: 4000,
+        //     callback: this.RespawnEvent,
+        //     callbackScope: this,
+        //     repeat: 1,
+        //     startAt: 2000
+        // })
+
+        let self = this;
         this.alive = false;
         this.ship.Explode();
+        this.lives--;
+        if (this.lives > 0) {
+            this.time.delayedCall(3000, function () {
+                self.ship = new PlayerShip(self);
+                self.alive = true;
+                self.invulnerable = true;
+            });
+
+            this.time.delayedCall(5000, function () {
+                self.invulnerable = false;
+            });
+        }
     }
+
+    // RespawnEvent() {
+    //     if (!this.alive) {
+    //         this.ship = new PlayerShip(this);
+    //         this.alive = true;
+    //         this.invulnerable = true;
+    //     } else {
+    //         this.invulnerable = false;
+    //     }
+    // }
 }

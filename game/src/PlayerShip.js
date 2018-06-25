@@ -1,4 +1,5 @@
 import Util from './Util.js'
+import Laser from './Laser.js'
 
 export default class PlayerShip extends Phaser.GameObjects.Sprite {
     constructor(scene) {
@@ -9,6 +10,7 @@ export default class PlayerShip extends Phaser.GameObjects.Sprite {
         this.shipEmitter = null;
         this.emitterDeathZone = null;
         this.util = new Util();
+        this.laser = new Laser(scene, 58);
         this.create();
     }
 
@@ -47,6 +49,7 @@ export default class PlayerShip extends Phaser.GameObjects.Sprite {
         let deathzonePosition = this.util.getAnglePos(-20, this.ship.angle, this.ship.x, this.ship.y);
         this.emitterDeathZone.setPosition(deathzonePosition.x, deathzonePosition.y);
         this.shipEmitter.setDeathZone(new Phaser.GameObjects.Particles.Zones.DeathZone(this.emitterDeathZone, true));
+        this.laser.update(this.ship.x, this.ship.y, this.ship.angle)
     }
 
     getPlayerShip() {
@@ -89,12 +92,22 @@ export default class PlayerShip extends Phaser.GameObjects.Sprite {
         this.ship.setAngularVelocity(0);
     }
 
+    Fire(){
+        this.laser.Fire();
+    }
+
+    StopFire(){
+        this.laser.StopFire();
+    }
+
     Explode() {
         let explosion_x = this.ship.x;
         let explosion_y = this.ship.y;
 
         this.ship.destroy();
         this.shipEmitter.on = false;
+
+
 
         let particles = this.scene.add.particles('blue');
         let explosion = particles.createEmitter({
@@ -106,8 +119,10 @@ export default class PlayerShip extends Phaser.GameObjects.Sprite {
             blendMode: 'ADD',
             lifespan: 5000,
             quantity: 200,
-            on: false
+            on: true
         })
-        explosion.on = true;
+        this.scene.time.delayedCall(2000, function() {
+            explosion.on = false;
+        });
     }
 }
