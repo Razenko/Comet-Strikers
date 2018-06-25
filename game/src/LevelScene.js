@@ -14,8 +14,6 @@ export default class LevelScene extends Phaser.Scene {
         this.level = level;
         this.alive = true;
         this.lives = 3;
-        this.invulnerable = false;
-        //this.util = new Util();
     }
 
     preload() {
@@ -28,6 +26,7 @@ export default class LevelScene extends Phaser.Scene {
     create() {
         this.add.image(400, 300, 'bg');
         this.ship = new PlayerShip(this);
+        //this.shipSpawn(this, 0);
         this.createAsteroids(4 + this.level, 1, this.level, this.ship.getPlayerShip().x, this.ship.getPlayerShip().y, this);
         this.cursors = this.input.keyboard.createCursorKeys();
         this.space = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
@@ -76,15 +75,13 @@ export default class LevelScene extends Phaser.Scene {
 
             for (let i = 0; i < this.asteroids.length; i++) {
                 this.asteroids[i].update();
-                if (this.invulnerable) {
-                    this.physics.world.collide(this.ship.getPlayerShip(), this.asteroids[i].getCelestialObject(), null, null, this);
-                } else {
-                    this.physics.world.collide(this.ship.getPlayerShip(), this.asteroids[i].getCelestialObject(), this.PlayerKilled, null, this);
-                }
+
+                //this.physics.world.collide(this.ship.getPlayerShip(), this.asteroids[i].getCelestialObject(), null, null, this);
+
+                this.physics.world.collide(this.ship.getPlayerShip(), this.asteroids[i].getCelestialObject(), this.onShipCollisionEvent, null, this);
+
 
             }
-
-
         }
         else {
             for (let i = 0; i < this.asteroids.length; i++) {
@@ -94,7 +91,8 @@ export default class LevelScene extends Phaser.Scene {
         }
     }
 
-    PlayerKilled() {
+
+    onShipCollisionEvent() {
         // let respawntimer = this.time.addEvent({
         //     delay: 4000,
         //     callback: this.RespawnEvent,
@@ -102,20 +100,26 @@ export default class LevelScene extends Phaser.Scene {
         //     repeat: 1,
         //     startAt: 2000
         // })
+        if (!this.ship.getVulnerablityState()) {
+            this.alive = false;
+            this.ship.Explode();
+            this.lives--;
+            this.shipSpawn(this);
+        }
+    }
 
-        let self = this;
-        this.alive = false;
-        this.ship.Explode();
-        this.lives--;
+    shipSpawn(self){
         if (this.lives > 0) {
             this.time.delayedCall(3000, function () {
                 self.ship = new PlayerShip(self);
                 self.alive = true;
-                self.invulnerable = true;
+                //self.invulnerable = true;
+                self.ship.setVulnerabilityState(true)
             });
 
             this.time.delayedCall(5000, function () {
-                self.invulnerable = false;
+                //self.invulnerable = false;
+                self.ship.setVulnerabilityState(false)
             });
         }
     }

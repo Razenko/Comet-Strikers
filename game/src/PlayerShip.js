@@ -7,6 +7,7 @@ export default class PlayerShip extends Phaser.GameObjects.Sprite {
         this.scene = scene;
         this.ship = null;
         this.active = true;
+        this.invulnerable = false;
         this.shipEmitter = null;
         this.emitterDeathZone = null;
         this.util = new Util();
@@ -125,4 +126,13 @@ export default class PlayerShip extends Phaser.GameObjects.Sprite {
             explosion.on = false;
         });
     }
+
+    setVulnerabilityState(state){
+        this.invulnerable = state;
+    }
+
+    getVulnerablityState(){
+        return this.invulnerable;
+    }
+
 }
