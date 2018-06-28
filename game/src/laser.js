@@ -1,5 +1,13 @@
-import Util from './Util.js'
+import Util from './util.js'
 
+/**
+ * @classdesc
+ * This class represents the laser cannon element the player uses as weapons on his ship.
+ * @class Laser
+ * @extends Phaser.GameObjects.Sprite
+ * @constructor scene - The current Phaser.Scene
+ * @constructor distance - The distance (spacing) between the individual lasers
+ */
 export default class Laser extends Phaser.GameObjects.Sprite {
     constructor(scene, distance) {
         super(scene);
@@ -10,6 +18,11 @@ export default class Laser extends Phaser.GameObjects.Sprite {
         this.create(2);
     }
 
+    /**
+     * Creates a given number of laser objects.
+     * @method create
+     * @param amount - The number of laser objects to create
+     */
     create(amount) {
         let particles = this.scene.add.particles('blue');
 
@@ -30,6 +43,13 @@ export default class Laser extends Phaser.GameObjects.Sprite {
         }
     }
 
+    /**
+     * Update the positioning of the laser emitters relative to the position of the ship.
+     * @method update
+     * @param ship_x - The ship's x-axis
+     * @param ship_y - The ship's y-axis
+     * @param ship_angle - The angle of the ship (as a rotating sprite)
+     */
     update(ship_x, ship_y, ship_angle) {
         let currentDistance = 0;
         let correction = this.distance / 2;
@@ -43,13 +63,19 @@ export default class Laser extends Phaser.GameObjects.Sprite {
         }
     }
 
-    Fire() {
+    /**
+     * Fire the lasers!!
+     */
+    fire() {
         for (let i = 0; i < this.lasers.length; i++) {
             this.lasers[i].on = true;
         }
     }
 
-    StopFire() {
+    /**
+     * Cease firing!!
+     */
+    stopFire() {
         for (let i = 0; i < this.lasers.length; i++) {
             this.lasers[i].on = false;
         }
