@@ -11,7 +11,7 @@ export default class Util {
      * @param y - The y-axis of the original object
      * @returns {{x: *, y: *}}
      */
-    getAnglePos(distance, angle, x, y) {
+    static getAnglePos(distance, angle, x, y) {
         let radians = (angle + 180) * Math.PI / 180;
         let position = {
             x: x + Math.cos(radians) * distance,
@@ -27,7 +27,7 @@ export default class Util {
      * @param max - Maximum value
      * @returns {number}
      */
-    getRandomInt(min, max) {
+    static getRandomInt(min, max) {
         return Math.floor(Math.random() * Math.floor((max + 1) - min) + min);
     }
 }

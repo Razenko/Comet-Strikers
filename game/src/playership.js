@@ -3,33 +3,99 @@ import Laser from './laser.js'
 
 /**
  * @classdesc
- * The ship which is controlled by the player. Creates the ship and provides control mechanisms.
+ * The sprite which is controlled by the player. Creates the sprite and provides control mechanisms.
  * Also handles the thrusters particle effects (engine exhaust trail).
- * @class PlayerShip - Represents the ship the player uses.
+ * @class PlayerShip - Represents the sprite the player uses.
  * @extends Phaser.GameObjects.Sprite
  * @constructor scene - The current Phaser.Scene
  */
 export default class PlayerShip extends Phaser.GameObjects.Sprite {
     constructor(scene) {
-        super(scene)
-        this.scene = scene;
-        this.ship = null;
-        this.active = true;
-        this.invulnerable = false;
-        this.shipEmitter = null;
-        this.emitterDeathZone = null;
-        this.util = new Util();
-        this.laser = null;
+        super(scene);
+        this._scene = scene;
+        this._sprite = null;
+        this._active = true;
+        this._invulnerable = false;
+        this._shipEmitter = null;
+        this._emitterDeathZone = null;
+        this._laser = null;
         this.create(scene);
     }
 
     /**
-     * Create a new ship and the associated thruster effects
+     Getters and setters
+     */
+
+    //Laser
+    get laser() {
+        return this._laser;
+    }
+
+    set laser(value) {
+        this._laser = value;
+    }
+
+    //EmitterDeathZone
+    get emitterDeathZone() {
+        return this._emitterDeathZone;
+    }
+
+    set emitterDeathZone(value) {
+        this._emitterDeathZone = value;
+    }
+
+    //ShipEmitter
+    get shipEmitter() {
+        return this._shipEmitter;
+    }
+
+    set shipEmitter(value) {
+        this._shipEmitter = value;
+    }
+
+    //Invulnerable
+    get invulnerable() {
+        return this._invulnerable;
+    }
+
+    set invulnerable(value) {
+        this._invulnerable = value;
+    }
+
+    //Active
+    get active() {
+        return this._active;
+    }
+
+    set active(value) {
+        this._active = value;
+    }
+
+    //Ship
+    get sprite() {
+        return this._sprite;
+    }
+
+    set sprite(value) {
+        this._sprite = value;
+    }
+
+    //Scene
+    get scene() {
+        return this._scene;
+    }
+
+    set scene(value) {
+        this._scene = value;
+    }
+
+    /**
+     * Create a new sprite and the associated thruster effects
      * @method create
      */
     create() {
         this.invulnerable = true;
-        console.log("Ship spawned, vulnerability set to true")
+        console.log("Ship spawned, vulnerability set to true");
         let particles = this.scene.add.particles('blue');
         this.shipEmitter = particles.createEmitter({
             speed: 1,
@@ -43,66 +109,66 @@ export default class PlayerShip extends Phaser.GameObjects.Sprite {
             on: false
         });
 
-        this.ship = this.scene.physics.add.image(400, 400, 'ship');
-        this.ship.setDamping(true);
-        this.ship.setDrag(0.99);
-        this.ship.setMaxVelocity(200);
-        this.ship.setVelocity(0, 0);
-        this.ship.setBounce(1, 1);
-        this.ship.angle = -90;
-        this.ship.setCollideWorldBounds(false);
-        this.emitterDeathZone = new Phaser.Geom.Circle(this.ship.x, this.ship.y, 50);
+        this.sprite = this.scene.physics.add.image(400, 400, 'ship');
+        this.sprite.setDamping(true);
+        this.sprite.setDrag(0.99);
+        this.sprite.setMaxVelocity(200);
+        this.sprite.setVelocity(0, 0);
+        this.sprite.setBounce(1, 1);
+        this.sprite.angle = -90;
+        this.sprite.setCollideWorldBounds(false);
+        this.emitterDeathZone = new Phaser.Geom.Circle(this.sprite.x, this.sprite.y, 50);
         this.laser = new Laser(this.scene, 58);
-        console.log("Disable invulnerability event started")
+        console.log("Disable invulnerability event started");
         this.setVulnerabilityState(this, 2000, false);
 
 
     }
 
     /**
-     * Update the ship's position (together with laser and thrusters).
+     * Update the sprite's position (together with laser and thrusters).
      * @method update
      */
     update() {
-        this.scene.physics.world.wrap(this.ship, 32);
-        let emitterPosition = this.util.getAnglePos(30, this.ship.angle, this.ship.x, this.ship.y);
+        this.scene.physics.world.wrap(this.sprite, 32);
+        let emitterPosition = Util.getAnglePos(30, this.sprite.angle, this.sprite.x, this.sprite.y);
         this.shipEmitter.setPosition(emitterPosition.x, emitterPosition.y);
-        //this.shipEmitter.setAngle({min: this.ship.angle + 180, max: this.ship.angle + 180, steps: 32});
-        this.shipEmitter.setAngle(this.ship.angle + 180);
-        let deathzonePosition = this.util.getAnglePos(-20, this.ship.angle, this.ship.x, this.ship.y);
+        //this.shipEmitter.setAngle({min: this.sprite.angle + 180, max: this.sprite.angle + 180, steps: 32});
+        this.shipEmitter.setAngle(this.sprite.angle + 180);
+        let deathzonePosition = Util.getAnglePos(-20, this.sprite.angle, this.sprite.x, this.sprite.y);
         this.emitterDeathZone.setPosition(deathzonePosition.x, deathzonePosition.y);
         this.shipEmitter.setDeathZone(new Phaser.GameObjects.Particles.Zones.DeathZone(this.emitterDeathZone, true));
-        this.laser.update(this.ship.x, this.ship.y, this.ship.angle);
+        this.laser.update(this.sprite.x, this.sprite.y, this.sprite.angle);
     }
 
-    /**
-     * Returns the current ship object
-     * @returns {null|*}
-     */
-    getPlayerShip() {
-        return this.ship;
-    }
+    // /**
+    //  * Returns the current sprite object
+    //  * @returns {null|*}
+    //  */
+    // getPlayerShip() {
+    //     return this.sprite;
+    // }
 
     /**
-     * Accelerate the ship forward.
+     * Accelerate the sprite forward.
      *
      */
 
     accelerate() {
         if (this.active) {
-            this.scene.physics.velocityFromRotation(this.ship.rotation, 200, this.ship.body.acceleration);
+            this.scene.physics.velocityFromRotation(this.sprite.rotation, 200, this.sprite.body.acceleration);
             this.shipEmitter.on = true;
         }
 
     }
 
     /**
-     * Stop/reverse the ship.
+     * Stop/reverse the sprite.
      *
      */
     deAccelerate() {
         if (this.active) {
-            this.scene.physics.velocityFromRotation(this.ship.rotation, -50, this.ship.body.acceleration);
+            this.scene.physics.velocityFromRotation(this.sprite.rotation, -50, this.sprite.body.acceleration);
             this.shipEmitter.on = false;
         }
     }
@@ -111,7 +177,7 @@ export default class PlayerShip extends Phaser.GameObjects.Sprite {
      * Disable thrusters and float
      */
     noAcceleration() {
-        this.ship.setAcceleration(0);
+        this.sprite.setAcceleration(0);
         this.shipEmitter.on = false;
     }
 
@@ -120,7 +186,7 @@ export default class PlayerShip extends Phaser.GameObjects.Sprite {
      */
     turnLeft() {
         if (this.active) {
-            this.ship.setAngularVelocity(-300);
+            this.sprite.setAngularVelocity(-300);
         }
     }
 
@@ -129,7 +195,7 @@ export default class PlayerShip extends Phaser.GameObjects.Sprite {
      */
     turnRight() {
         if (this.active) {
-            this.ship.setAngularVelocity(300);
+            this.sprite.setAngularVelocity(300);
         }
     }
 
@@ -137,32 +203,33 @@ export default class PlayerShip extends Phaser.GameObjects.Sprite {
      * Stop rotating
      */
     neutral() {
-        this.ship.setAngularVelocity(0);
+        this.sprite.setAngularVelocity(0);
     }
 
     /**
      * Fire teh lazers!!
      */
-    fire(){
+    fire() {
         this.laser.fire();
     }
 
     /**
      * Stop firing
      */
-    stopFire(){
+    stopFire() {
         this.laser.stopFire();
     }
 
     /**
-     * Total and utter destruction of the ship.
+     * Total and utter destruction of the sprite.
      */
     explode() {
-        let explosion_x = this.ship.x;
-        let explosion_y = this.ship.y;
+        let explosion_x = this.sprite.x;
+        let explosion_y = this.sprite.y;
 
-        this.ship.destroy();
+        this.sprite.destroy();
         this.shipEmitter.on = false;
+        this.stopFire();
 
         let particles = this.scene.add.particles('blue');
         let explosion = particles.createEmitter({
@@ -175,25 +242,25 @@ export default class PlayerShip extends Phaser.GameObjects.Sprite {
             lifespan: 5000,
             quantity: 200,
             on: true
-        })
-        this.scene.time.delayedCall(2000, function() {
+        });
+        this.scene.time.delayedCall(2000, function () {
             explosion.on = false;
         });
     }
 
 
     /**
-     * Set the vulnerability of the ship (invulnerable is false, vulnerable is true)
+     * Set the vulnerability of the sprite (invulnerable is false, vulnerable is true)
      * @param self - The current scope (this class)
      * @param delay - Delay in milliseconds until the parameter is passed through
      * @param state - The new vulnerability state (boolean)
      */
-    setVulnerabilityState(self, delay , state){
+    setVulnerabilityState(self, delay, state) {
         this.scene.time.delayedCall(delay, function () {
             self.invulnerable = state;
             //debugcode:
-            if(self.invulnerable){
-                console.log("ship invulnerable");
+            if (self.invulnerable) {
+                console.log("sprite invulnerable");
             } else {
                 console.log("Ship vulnerable");
             }
@@ -204,7 +271,7 @@ export default class PlayerShip extends Phaser.GameObjects.Sprite {
      * Return the current vulnerability state
      * @returns {boolean}
      */
-    getVulnerabilityState(){
+    getVulnerabilityState() {
         return this.invulnerable;
     }
 

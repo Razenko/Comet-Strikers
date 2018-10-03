@@ -2,7 +2,7 @@ import Util from './util.js'
 
 /**
  * @classdesc
- * This class represents the laser cannon element the player uses as weapons on his ship.
+ * This class represents the laser cannon element the player uses as weapons on his sprite.
  * @class Laser
  * @extends Phaser.GameObjects.Sprite
  * @constructor scene - The current Phaser.Scene
@@ -11,11 +11,41 @@ import Util from './util.js'
 export default class Laser extends Phaser.GameObjects.Sprite {
     constructor(scene, distance) {
         super(scene);
-        this.scene = scene;
-        this.distance = distance;
-        this.lasers = [];
-        this.util = new Util();
+        this._scene = scene;
+        this._distance = distance;
+        this._lasers = [];
         this.create(2);
+    }
+
+    /**
+     Getters and setters
+     */
+
+    //Lasers
+    get lasers() {
+        return this._lasers;
+    }
+
+    set lasers(value) {
+        this._lasers = value;
+    }
+
+    //Distance
+    get distance() {
+        return this._distance;
+    }
+
+    set distance(value) {
+        this._distance = value;
+    }
+
+    //Scene
+    get scene() {
+        return this._scene;
+    }
+
+    set scene(value) {
+        this._scene = value;
     }
 
     /**
@@ -44,21 +74,21 @@ export default class Laser extends Phaser.GameObjects.Sprite {
     }
 
     /**
-     * Update the positioning of the laser emitters relative to the position of the ship.
+     * Update the positioning of the laser emitters relative to the position of the sprite.
      * @method update
-     * @param ship_x - The ship's x-axis
-     * @param ship_y - The ship's y-axis
-     * @param ship_angle - The angle of the ship (as a rotating sprite)
+     * @param ship_x - The sprite's x-axis
+     * @param ship_y - The sprite's y-axis
+     * @param ship_angle - The angle of the sprite (as a rotating sprite)
      */
     update(ship_x, ship_y, ship_angle) {
         let currentDistance = 0;
         let correction = this.distance / 2;
-        for (let i = 0; i < this.lasers.length; i++) {
-            let initialPosition = this.util.getAnglePos(-15, ship_angle, ship_x, ship_y);
-            let laserPosition = this.util.getAnglePos(currentDistance - correction, ship_angle+90, initialPosition.x, initialPosition.y);
-            this.lasers[i].setPosition(laserPosition.x, laserPosition.y);
-            //this.shipEmitter.setAngle({min: this.ship.angle + 180, max: this.ship.angle + 180, steps: 32});
-            this.lasers[i].setAngle(ship_angle);
+        for (let laser of this.lasers) {
+            let initialPosition = Util.getAnglePos(-15, ship_angle, ship_x, ship_y);
+            let laserPosition = Util.getAnglePos(currentDistance - correction, ship_angle + 90, initialPosition.x, initialPosition.y);
+            laser.setPosition(laserPosition.x, laserPosition.y);
+            //this.shipEmitter.setAngle({min: this.sprite.angle + 180, max: this.sprite.angle + 180, steps: 32});
+            laser.setAngle(ship_angle);
             currentDistance += this.distance;
         }
     }
@@ -67,8 +97,8 @@ export default class Laser extends Phaser.GameObjects.Sprite {
      * Fire the lasers!!
      */
     fire() {
-        for (let i = 0; i < this.lasers.length; i++) {
-            this.lasers[i].on = true;
+        for (let laser of this.lasers) {
+            laser.on = true;
         }
     }
 
@@ -76,8 +106,8 @@ export default class Laser extends Phaser.GameObjects.Sprite {
      * Cease firing!!
      */
     stopFire() {
-        for (let i = 0; i < this.lasers.length; i++) {
-            this.lasers[i].on = false;
+        for (let laser of this.lasers) {
+            laser.on = false;
         }
     }
 }

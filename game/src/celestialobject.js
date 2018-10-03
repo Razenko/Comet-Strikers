@@ -8,49 +8,109 @@ import Util from './util.js'
  * @constructor scene - The current Phaser.Scene
  * @constructor object_type - The object type (asteroid or comet, boolean)
  * @constructor level - The current level as integer (for difficulty modifiers)
- * @constructor ship_x - The ship's x-axis
- * @constructor ship_y - The ship's y-axis
+ * @constructor ship_x - The sprite's x-axis
+ * @constructor ship_y - The sprite's y-axis
  */
 export default class CelestialObject extends Phaser.GameObjects.Sprite {
     constructor(scene, object_type, level, ship_x, ship_y) {
         super(scene);
-        this.scene = scene;
-        this.level = level;
-        this.object_type = object_type;
-        this.ship_x = ship_x;
-        this.ship_y = ship_y;
-        this.celestialObject = null;
-        this.util = new Util();
+        this._scene = scene;
+        this._level = level;
+        this._object_type = object_type;
+        this._ship_x = ship_x;
+        this._ship_y = ship_y;
+        this._sprite = null;
         this.create();
+    }
 
+    /**
+     Getters and setters
+     */
+
+    //Scene
+    get scene() {
+        return this._scene;
+    }
+
+    set scene(value) {
+        this._scene = value;
+    }
+
+    //Object_type
+    get object_type() {
+        return this._object_type;
+    }
+
+    set object_type(value) {
+        this._object_type = value;
+    }
+
+    //Level
+    get level() {
+        return this._level;
+    }
+
+    set level(value) {
+        this._level = value;
+    }
+
+    //Ship_x
+    get ship_x() {
+        return this._ship_x;
+    }
+
+    set ship_x(value) {
+        this._ship_x = value;
+    }
+
+    //Ship_y
+    get ship_y() {
+        return this._ship_y;
+    }
+
+    set ship_y(value) {
+        this._ship_y = value;
+    }
+
+    //Sprite
+    get sprite() {
+        return this._sprite;
+    }
+
+    set sprite(value) {
+        this._sprite = value;
     }
 
     /**
      * Create a new asteroid or comet
      */
     create() {
-        let spawnPoint = this.getSafeSpawnpoint(this.ship_x, this.ship_y);
-        this.celestialObject = this.scene.physics.add.image(spawnPoint.x, spawnPoint.y, 'asteroid1');
-        this.celestialObject.setCircle(70);
-        this.celestialObject.setScale(this.util.getRandomInt(3, 7) / 10);
-        this.celestialObject.setMaxVelocity(200);
-        this.celestialObject.setVelocity(this.util.getRandomInt(-100, 100), this.util.getRandomInt(-100, 100));
-        this.celestialObject.setBounce(1, 1);
+        const sizeBoundaries = { //Minimum and maximum size of the sprite in percentages based on original image
+            min: 35,
+            max: 65
+        };
+        let spawnPoint = CelestialObject.getSafeSpawnpoint(this.ship_x, this.ship_y);
+        this.sprite = this.scene.physics.add.image(spawnPoint.x, spawnPoint.y, 'asteroid1');
+        this.sprite.setCircle(70);
+        this.sprite.setScale(Util.getRandomInt(sizeBoundaries.min, sizeBoundaries.max) / 100);
+        this.sprite.setMaxVelocity(200);
+        this.sprite.setVelocity(Util.getRandomInt(-100, 100), Util.getRandomInt(-100, 100));
+        this.sprite.setBounce(1, 1);
 
-        this.celestialObject.setCollideWorldBounds(false);
+        this.sprite.setCollideWorldBounds(false);
 
-        // if (this.celestialObject.x >= (this.ship_x - 150) && this.celestialObject.x <= (this.ship_x + 150)) {
-        //     if (this.celestialObject.x > this.ship_x) {
-        //         this.celestialObject.x += 100;
+        // if (this.sprite.x >= (this.ship_x - 150) && this.sprite.x <= (this.ship_x + 150)) {
+        //     if (this.sprite.x > this.ship_x) {
+        //         this.sprite.x += 100;
         //     } else {
-        //         this.celestialObject.x -= 100
+        //         this.sprite.x -= 100
         //     }
         // }
-        // if (this.celestialObject.y >= (this.ship_y - 150) && this.celestialObject.y <= (this.ship_y + 150)) {
-        //     if (this.celestialObject.y > this.ship_y) {
-        //         this.celestialObject.y += 100;
+        // if (this.sprite.y >= (this.ship_y - 150) && this.sprite.y <= (this.ship_y + 150)) {
+        //     if (this.sprite.y > this.ship_y) {
+        //         this.sprite.y += 100;
         //     } else {
-        //         this.celestialObject.y -= 100
+        //         this.sprite.y -= 100
         //     }
         // }
     }
@@ -59,8 +119,8 @@ export default class CelestialObject extends Phaser.GameObjects.Sprite {
      * Update the position and rotation of the asteroid or comet.
      */
     update() {
-        this.celestialObject.angle += 1;
-        this.scene.physics.world.wrap(this.getCelestialObject(), 64);
+        this.sprite.angle += 1;
+        this.scene.physics.world.wrap(this.sprite, 64);
     }
 
 
@@ -70,9 +130,9 @@ export default class CelestialObject extends Phaser.GameObjects.Sprite {
      * @param ship_y
      * @returns {{x: *, y: *}}
      */
-    getSafeSpawnpoint(ship_x, ship_y) {
-        let x = this.util.getRandomInt(50, 750);
-        let y = this.util.getRandomInt(50, 450);
+    static getSafeSpawnpoint(ship_x, ship_y) {
+        let x = Util.getRandomInt(50, 750);
+        let y = Util.getRandomInt(50, 450);
         if (x >= (ship_x - 150) && x <= (ship_x + 150)) {
             if (x > ship_x) {
                 x += 100;
@@ -89,13 +149,5 @@ export default class CelestialObject extends Phaser.GameObjects.Sprite {
         }
 
         return {x, y}
-    }
-
-    /**
-     * Return the asteroid or comet object
-     * @returns {null|*}
-     */
-    getCelestialObject() {
-        return this.celestialObject;
     }
 }
