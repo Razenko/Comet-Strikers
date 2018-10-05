@@ -5,7 +5,7 @@ import LevelScene from './src/levelscene.js'
  * Made by Marcel Schoeber as the final assignment for the DHTML course of Stenden University.
  * Studentnumber: 331910
  *
- * Uses the Phaser 3.10.1 Framework.
+ * Uses the Phaser 3.14 Framework.
  * Requires a browser that supports ECMAScript 6. (see https://kangax.github.io/compat-table/es6/ for a detailed overview)
  */
 

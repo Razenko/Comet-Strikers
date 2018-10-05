@@ -8,8 +8,8 @@ import Util from './util.js'
  * @constructor scene - The current Phaser.Scene
  * @constructor object_type - The object type (asteroid or comet, boolean)
  * @constructor level - The current level as integer (for difficulty modifiers)
- * @constructor ship_x - The sprite's x-axis
- * @constructor ship_y - The sprite's y-axis
+ * @constructor ship_x - The ship's x-axis
+ * @constructor ship_y - The ship's y-axis
  */
 export default class CelestialObject extends Phaser.GameObjects.Sprite {
     constructor(scene, object_type, level, ship_x, ship_y) {
@@ -96,23 +96,7 @@ export default class CelestialObject extends Phaser.GameObjects.Sprite {
         this.sprite.setMaxVelocity(200);
         this.sprite.setVelocity(Util.getRandomInt(-100, 100), Util.getRandomInt(-100, 100));
         this.sprite.setBounce(1, 1);
-
         this.sprite.setCollideWorldBounds(false);
-
-        // if (this.sprite.x >= (this.ship_x - 150) && this.sprite.x <= (this.ship_x + 150)) {
-        //     if (this.sprite.x > this.ship_x) {
-        //         this.sprite.x += 100;
-        //     } else {
-        //         this.sprite.x -= 100
-        //     }
-        // }
-        // if (this.sprite.y >= (this.ship_y - 150) && this.sprite.y <= (this.ship_y + 150)) {
-        //     if (this.sprite.y > this.ship_y) {
-        //         this.sprite.y += 100;
-        //     } else {
-        //         this.sprite.y -= 100
-        //     }
-        // }
     }
 
     /**

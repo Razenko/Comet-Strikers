@@ -101,16 +101,16 @@ export default class LevelScene extends Phaser.Scene {
         this.load.image('ship', './game/assets/ship.png');
         this.load.image('blue', './game/assets/blue_particle.png');
         this.load.image('asteroid1', './game/assets/asteroid1.png');
+        this.load.image('laser', './game/assets/laser.png');
     }
 
     /**
-     * Create the elements of the level, such as: the background image, the player's sprite, the asteroids/comets and the input handlers.
+     * Create the elements of the level, such as: the background image, the player's ship, the asteroids/comets and the input handlers.
      * @method create
      */
     create() {
         this.add.image(400, 300, 'bg');
         this.ship = new PlayerShip(this);
-        //this.shipSpawn(this, 0);
         this.createAsteroids(4 + this.level, 1, this.level, this.ship.sprite.x, this.ship.sprite.y, this);
         this.cursors = this.input.keyboard.createCursorKeys();
         this.space = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
@@ -167,16 +167,6 @@ export default class LevelScene extends Phaser.Scene {
 
             this.ship.update();
 
-            // for (let i = 0; i < this.asteroids.length; i++) {
-            //     this.asteroids[i].update();
-            //
-            //     //this.physics.world.collide(this.sprite.getPlayerShip(), this.asteroids[i].getCelestialObject(), null, null, this);
-            //
-            //     this.physics.world.collide(this.sprite.getPlayerShip(), this.asteroids[i].getCelestialObject(), this.onShipCollisionEvent, null, this);
-            //
-            //
-            // }
-
             for (let asteroid of this.asteroids) {
                 asteroid.update();
                 this.physics.world.collide(this.ship.sprite, asteroid.sprite, this.onShipCollisionEvent, null, this);
@@ -190,8 +180,8 @@ export default class LevelScene extends Phaser.Scene {
     }
 
     /**
-     * Called when a sprite collides with an asteroid or comet.
-     * Destroys current sprite if sprite is not invulnerable.
+     * Called when a ship collides with an asteroid or comet.
+     * Destroys current ship if ship is not invulnerable.
      * @method onShipCollisionEvent
      */
     onShipCollisionEvent() {
@@ -202,7 +192,7 @@ export default class LevelScene extends Phaser.Scene {
         //     repeat: 1,
         //     startAt: 2000
         // })
-        if (!this.ship.getVulnerabilityState()) {
+        if (!this.ship.invulnerable) {
             this.alive = false;
             this.ship.explode();
             this.lives--;
@@ -211,7 +201,7 @@ export default class LevelScene extends Phaser.Scene {
     }
 
     /**
-     * Spawn a new sprite if player has any lives left
+     * Spawn a new ship if player has any lives left
      * @method shipSpawn
      * @param self - The current Phaser.Scene
      * @param delay - Delay spawning with a given number of milliseconds

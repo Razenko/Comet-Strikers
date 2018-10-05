@@ -2,7 +2,7 @@ import Util from './util.js'
 
 /**
  * @classdesc
- * This class represents the laser cannon element the player uses as weapons on his sprite.
+ * This class represents the laser cannon element the player uses as weapons on his ship.
  * @class Laser
  * @extends Phaser.GameObjects.Sprite
  * @constructor scene - The current Phaser.Scene
@@ -14,7 +14,7 @@ export default class Laser extends Phaser.GameObjects.Sprite {
         this._scene = scene;
         this._distance = distance;
         this._lasers = [];
-        this.create(2);
+        this._delay = 0;
     }
 
     /**
@@ -48,66 +48,84 @@ export default class Laser extends Phaser.GameObjects.Sprite {
         this._scene = value;
     }
 
+    //Delay
+    get delay() {
+        return this._delay;
+    }
+
+    set delay(value) {
+        this._delay = value;
+    }
+
     /**
      * Creates a given number of laser objects.
      * @method create
+     * @param ship_x - Horizontal position of the ship
+     * @param ship_y - Vertical position of the ship
+     * @param ship_angle - Angle of the ship
      * @param amount - The number of laser objects to create
      */
-    create(amount) {
-        let particles = this.scene.add.particles('blue');
-
+    create(ship_x, ship_y, ship_angle, amount) {
+        let currentDistance = 0;
+        let correction = this.distance / 2;
         for (let i = 0; i < amount; i++) {
-            let laser = particles.createEmitter({
-                speed: 200,
-                scale: {start: 1, end: 0},
-                alpha: 0.5,
-                blendMode: 'ADD',
-                //angle: { min: 60, max: 120, steps: 32 },
-                lifespan: 3000,
-                quantity: 1,
-                //radial: true
-                on: false
-            });
-
+            let laser = this.scene.physics.add.image(400, 400, 'laser');
+            laser.setScale(0.5);
+            laser.setAlpha(0.8);
+            let initialPosition = Util.getAnglePos(-15, ship_angle, ship_x, ship_y);
+            let laserPosition = Util.getAnglePos(currentDistance - correction, ship_angle + 90, initialPosition.x, initialPosition.y);
+            laser.setPosition(laserPosition.x, laserPosition.y);
+            laser.setAngle(ship_angle);
+            currentDistance += this.distance;
             this.lasers.push(laser);
         }
     }
 
     /**
-     * Update the positioning of the laser emitters relative to the position of the sprite.
+     * Update the positioning of the lasers relative to the position of the ship.
      * @method update
-     * @param ship_x - The sprite's x-axis
-     * @param ship_y - The sprite's y-axis
-     * @param ship_angle - The angle of the sprite (as a rotating sprite)
      */
-    update(ship_x, ship_y, ship_angle) {
-        let currentDistance = 0;
-        let correction = this.distance / 2;
+    update() {
+        let killbuffer = [];
         for (let laser of this.lasers) {
-            let initialPosition = Util.getAnglePos(-15, ship_angle, ship_x, ship_y);
-            let laserPosition = Util.getAnglePos(currentDistance - correction, ship_angle + 90, initialPosition.x, initialPosition.y);
-            laser.setPosition(laserPosition.x, laserPosition.y);
-            //this.shipEmitter.setAngle({min: this.sprite.angle + 180, max: this.sprite.angle + 180, steps: 32});
-            laser.setAngle(ship_angle);
-            currentDistance += this.distance;
+            this.scene.physics.velocityFromRotation(laser.rotation, 800, laser.body.velocity);
+            if (laser.x < 0 || laser.y < 0 || laser.x > this.scene.cameras.main.width || laser.y > this.scene.cameras.main.height) {
+                laser.destroy();
+                killbuffer.push(laser);
+            }
+        }
+
+        this.cleanLaserArray(killbuffer);
+    }
+
+    /**
+     * Cleans out the laser array of objects that are no longer in the playing field.
+     * @param killbuffer - Array of lasers due for removal.
+     */
+    cleanLaserArray(killbuffer) {
+        if (killbuffer.length > 0) {
+            for (let laser of killbuffer) {
+                this.lasers.splice(this.lasers.indexOf(laser));
+            }
         }
     }
 
     /**
      * Fire the lasers!!
      */
-    fire() {
-        for (let laser of this.lasers) {
-            laser.on = true;
+    fire(ship_x, ship_y, ship_angle) {
+        if (this.delay < 1) {
+            this.create(ship_x, ship_y, ship_angle, 2);
+            this.delay = 8;
+            //console.log(this.lasers.length)
         }
+        this.delay--;
     }
 
     /**
      * Cease firing!!
      */
     stopFire() {
-        for (let laser of this.lasers) {
-            laser.on = false;
-        }
+        this.delay = 0;
     }
 }
