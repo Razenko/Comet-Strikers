@@ -102,6 +102,11 @@ export default class LevelScene extends Phaser.Scene {
         this.load.image('blue', './game/assets/blue_particle.png');
         this.load.image('asteroid1', './game/assets/asteroid1.png');
         this.load.image('laser', './game/assets/laser.png');
+        this.load.spritesheet('explosion', './game/assets/explosion.png', {
+            frameWidth: 128,
+            frameHeight: 128,
+            endFrame: 16
+        });
     }
 
     /**
@@ -114,6 +119,14 @@ export default class LevelScene extends Phaser.Scene {
         this.createAsteroids(4 + this.level, 1, this.level, this.ship.sprite.x, this.ship.sprite.y, this);
         this.cursors = this.input.keyboard.createCursorKeys();
         this.space = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+
+        let config = {
+            key: 'explode',
+            frames: this.anims.generateFrameNumbers('explosion', {start: 0, end: 16, first: 16}),
+            frameRate: 20
+        };
+
+        this.anims.create(config);
     }
 
     /**
@@ -170,6 +183,9 @@ export default class LevelScene extends Phaser.Scene {
             for (let asteroid of this.asteroids) {
                 asteroid.update();
                 this.physics.world.collide(this.ship.sprite, asteroid.sprite, this.onShipCollisionEvent, null, this);
+                for (let laser of this.ship.laser.lasers) {
+                    this.physics.world.overlap(asteroid.sprite, laser, this.onLaserCollisionEvent, null, this);
+                }
             }
         }
         else {
@@ -199,6 +215,37 @@ export default class LevelScene extends Phaser.Scene {
             this.shipSpawn(this, 3000);
         }
     }
+
+    onLaserCollisionEvent(asteroidSprite, laser) {
+        // console.log("Laser collision event fired!");
+        // console.log(asteroid);
+        // console.log(laser);
+        let explosion = this.add.sprite(asteroidSprite.x, asteroidSprite.y, 'explosion');
+        explosion.setScale(asteroidSprite.scaleX * 2);
+        laser.destroy();
+        asteroidSprite.destroy();
+        // for(let laser of this.ship.laser.lasers) {
+        this.ship.laser.lasers.splice(this.ship.laser.lasers.indexOf(laser));
+        // }
+        //
+        // for (let slaser of this.ship.laser.lasers) {
+        //     if(slaser.x  < (explosion.centerX+explosion.width) && slaser.x > (explosion.centerX-explosion.width) && slaser.y < (explosion.centerY+explosion.height) && slaser.y > (explosion.centerY-explosion.height) ){
+        //         //console.log("lx:"+slaser.x+" ly:"+slaser.y+" ex:"+explosion.x+" ey:"+explosion.y);
+        //         slaser.destroy();
+        //         this.ship.laser.lasers.splice(this.ship.laser.lasers.indexOf(slaser));
+        //     }
+        //
+        // }
+
+
+        explosion.anims.play('explode');
+        // for (let asteroid of this.asteroids) {
+        //     if(asteroid.sprite === asteroidSprite) {
+        //         this.asteroids.splice(this.asteroids.indexOf(asteroid));
+        //     }
+        // }
+    }
+
 
     /**
      * Spawn a new ship if player has any lives left
