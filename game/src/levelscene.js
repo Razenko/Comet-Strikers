@@ -116,7 +116,7 @@ export default class LevelScene extends Phaser.Scene {
     create() {
         this.add.image(400, 300, 'bg');
         this.ship = new PlayerShip(this);
-        this.createAsteroids(4 + this.level, 1, this.level, this.ship.sprite.x, this.ship.sprite.y, this);
+        this.createAsteroids(4 + this.level, 'asteroid', this.level, this.ship.sprite.x, this.ship.sprite.y, this);
         this.cursors = this.input.keyboard.createCursorKeys();
         this.space = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
 
@@ -145,6 +145,16 @@ export default class LevelScene extends Phaser.Scene {
             this.asteroids.push(asteroid);
         }
     }
+
+    createChildAsteroids(amount, level, ship_x, ship_y, scene, x, y, scale) {
+        for (let i = 0; i < amount; i++) {
+            let asteroid = new CelestialObject(scene, 'child_asteroid', level, ship_x, ship_y);
+            asteroid.sprite.setPosition(x, y);
+            asteroid.sprite.setScale(scale);
+            this.asteroids.push(asteroid);
+        }
+    }
+
 
     /**
      * Update the current game logic. Check for input events and collisions.
@@ -222,6 +232,16 @@ export default class LevelScene extends Phaser.Scene {
         // console.log(laser);
         let explosion = this.add.sprite(asteroidSprite.x, asteroidSprite.y, 'explosion');
         explosion.setScale(asteroidSprite.scaleX * 2);
+        if(this.isOriginalAsteroid(asteroidSprite, this.asteroids)) {
+            let modifier = 0;
+            if (asteroidSprite.scaleX < 0.5) {
+                modifier = 2;
+            } else {
+                modifier = 3;
+            }
+            this.createChildAsteroids(modifier, this.level, this.ship.sprite.x, this.ship.sprite.y, this, asteroidSprite.x, asteroidSprite.y, (asteroidSprite.scaleX / modifier));
+        }
+
         laser.destroy();
         asteroidSprite.destroy();
         // for(let laser of this.ship.laser.lasers) {
@@ -262,6 +282,18 @@ export default class LevelScene extends Phaser.Scene {
                 //self.sprite.setVulnerabilityState(true)
             });
         }
+    }
+
+    isOriginalAsteroid(sprite, collection) {
+        for (let object of collection) {
+            if (object instanceof CelestialObject) {
+                if (sprite === object.sprite) {
+                    console.log(object.object_type);
+                    return object.object_type === 'asteroid';
+                }
+            }
+        }
+        return null;
     }
 
     // RespawnEvent() {
