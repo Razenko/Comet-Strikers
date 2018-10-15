@@ -9,7 +9,7 @@ import Util from './util.js'
  * @constructor distance - The distance (spacing) between the individual lasers
  */
 export default class Weapon extends Phaser.GameObjects.Sprite {
-    constructor(scene, distance, delay, texture, scale, alpha) {
+    constructor(scene, distance, delay, speed, texture, scale, alpha) {
         super(scene);
         this._scene = scene;
         this._distance = distance;
@@ -19,6 +19,7 @@ export default class Weapon extends Phaser.GameObjects.Sprite {
         this._delayCounter = 0;
         this._scale = scale;
         this._alpha = alpha;
+        this._speed = speed;
     }
 
     /**
@@ -97,6 +98,15 @@ export default class Weapon extends Phaser.GameObjects.Sprite {
         this._delayCounter = value;
     }
 
+    //Speed
+    get speed() {
+        return this._speed;
+    }
+
+    set speed(value) {
+        this._speed = value;
+    }
+
 
     /**
      * Creates a given number of laser objects.
@@ -129,7 +139,7 @@ export default class Weapon extends Phaser.GameObjects.Sprite {
     update() {
         let purgebuffer = [];
         for (let element of this.elements) {
-            this.scene.physics.velocityFromRotation(element.rotation, 800, element.body.velocity);
+            this.scene.physics.velocityFromRotation(element.rotation, this.speed, element.body.velocity);
             if (element.x < 0 || element.y < 0 || element.x > this.scene.cameras.main.width || element.y > this.scene.cameras.main.height) {
                 element.destroy();
                 purgebuffer.push(element);

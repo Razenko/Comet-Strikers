@@ -12,15 +12,18 @@ import Util from './util.js'
  * @constructor ship_y - The ship's y-axis
  */
 export default class CelestialObject extends Phaser.GameObjects.Sprite {
-    constructor(scene, object_type, level, ship_x, ship_y) {
+    constructor(scene, object_type, level, spawnpoint, scale, rotation, ship_x, ship_y) {
         super(scene);
         this._scene = scene;
         this._level = level;
         this._object_type = object_type;
+        this._spawnpoint = spawnpoint;
+        this._scale = scale;
         this._ship_x = ship_x;
         this._ship_y = ship_y;
         this._sprite = null;
-        this.create();
+        this._rotation = rotation;
+        //this.create();
     }
 
     /**
@@ -43,6 +46,33 @@ export default class CelestialObject extends Phaser.GameObjects.Sprite {
 
     set object_type(value) {
         this._object_type = value;
+    }
+
+    //Spawnpoint
+    get spawnpoint() {
+        return this._spawnpoint;
+    }
+
+    set spawnpoint(value) {
+        this._spawnpoint = value;
+    }
+
+    //Scale
+    get scale() {
+        return this._scale;
+    }
+
+    set scale(value) {
+        this._scale = value;
+    }
+
+    //Rotation
+    get rotation() {
+        return this._rotation;
+    }
+
+    set rotation(value) {
+        this._rotation = value;
     }
 
     //Level
@@ -89,10 +119,18 @@ export default class CelestialObject extends Phaser.GameObjects.Sprite {
             min: 35,
             max: 65
         };
-        let spawnPoint = CelestialObject.getSafeSpawnpoint(this.ship_x, this.ship_y);
-        this.sprite = this.scene.physics.add.image(spawnPoint.x, spawnPoint.y, 'asteroid1');
+        if (this.spawnpoint == null) {
+            this.spawnpoint = CelestialObject.getSafeSpawnpoint(this.ship_x, this.ship_y);
+        }
+        if (this.scale == null) {
+            this.scale = Util.getRandomInt(sizeBoundaries.min, sizeBoundaries.max) / 100;
+        }
+        if (this.rotation == null) {
+            this.rotation = Util.getRandomInt(-20, 20) / 10;
+        }
+        this.sprite = this.scene.physics.add.image(this.spawnpoint.x, this.spawnpoint.y, 'asteroid1');
         this.sprite.setCircle(70);
-        this.sprite.setScale(Util.getRandomInt(sizeBoundaries.min, sizeBoundaries.max) / 100);
+        this.sprite.setScale(this.scale);
         this.sprite.setMaxVelocity(200);
         this.sprite.setVelocity(Util.getRandomInt(-100, 100), Util.getRandomInt(-100, 100));
         this.sprite.setBounce(1, 1);
@@ -103,7 +141,7 @@ export default class CelestialObject extends Phaser.GameObjects.Sprite {
      * Update the position and rotation of the asteroid or comet.
      */
     update() {
-        this.sprite.angle += 1;
+        this.sprite.angle += this.rotation;
         this.scene.physics.world.wrap(this.sprite, 64);
     }
 

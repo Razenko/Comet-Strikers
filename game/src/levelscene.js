@@ -1,6 +1,7 @@
 import Util from './util.js'
 import PlayerShip from './playership.js'
-import CelestialObject from './celestialobject.js'
+// import CelestialObject from './celestialobject.js'
+import Asteroid from './asteroid.js'
 
 /**
  * @classdesc
@@ -16,10 +17,13 @@ export default class LevelScene extends Phaser.Scene {
             key: 'LevelScene'
         });
         this._ship = null;
-        this._cursors = null;
-        this._space = null;
-        this._ctrl = null;
+        // this._cursors = null;
+        // this._space = null;
+        // this._ctrl = null;
+        this._controls = null;
         this._asteroids = [];
+        this._childAsteroids = [];
+        this._comets = [];
         this._level = level;
         this._alive = true;
         this._lives = 3;
@@ -38,32 +42,42 @@ export default class LevelScene extends Phaser.Scene {
         this._ship = value;
     }
 
-    //Cursors
-    get cursors() {
-        return this._cursors;
+    //Controls
+    get controls() {
+        return this._controls;
     }
 
-    set cursors(value) {
-        this._cursors = value;
+    set controls(value) {
+        this._controls = value;
     }
 
-    //Space
-    get space() {
-        return this._space;
-    }
-
-    set space(value) {
-        this._space = value;
-    }
-
-    //Ctrl
-    get ctrl() {
-        return this._ctrl;
-    }
-
-    set ctrl(value) {
-        this._ctrl = value;
-    }
+    //
+    // //Cursors
+    // get cursors() {
+    //     return this._cursors;
+    // }
+    //
+    // set cursors(value) {
+    //     this._cursors = value;
+    // }
+    //
+    // //Space
+    // get space() {
+    //     return this._space;
+    // }
+    //
+    // set space(value) {
+    //     this._space = value;
+    // }
+    //
+    // //Ctrl
+    // get ctrl() {
+    //     return this._ctrl;
+    // }
+    //
+    // set ctrl(value) {
+    //     this._ctrl = value;
+    // }
 
     //Asteroids
     get asteroids() {
@@ -72,6 +86,24 @@ export default class LevelScene extends Phaser.Scene {
 
     set asteroids(value) {
         this._asteroids = value;
+    }
+
+    //ChildAsteroids
+    get childAsteroids() {
+        return this._childAsteroids;
+    }
+
+    set childAsteroids(value) {
+        this._childAsteroids = value;
+    }
+
+    //Comets
+    get comets() {
+        return this._comets;
+    }
+
+    set comets(value) {
+        this._comets = value;
     }
 
     //Level
@@ -128,9 +160,16 @@ export default class LevelScene extends Phaser.Scene {
         this.add.image(400, 300, 'bg');
         this.ship = new PlayerShip(this);
         this.createAsteroids(4 + this.level, 'asteroid', this.level, this.ship.sprite.x, this.ship.sprite.y, this);
-        this.cursors = this.input.keyboard.createCursorKeys();
-        this.space = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
-        this.ctrl = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.CTRL);
+
+        this.controls = {
+            cursors: this.input.keyboard.createCursorKeys(),
+            space: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE),
+            ctrl: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.CTRL)
+        };
+
+        // this.cursors = this._input.keyboard.createCursorKeys();
+        // this.space = this._input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+        // this.ctrl = this._input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.CTRL);
 
         let config = {
             key: 'explode',
@@ -153,17 +192,20 @@ export default class LevelScene extends Phaser.Scene {
      */
     createAsteroids(amount, type, level, ship_x, ship_y, scene) {
         for (let i = 0; i < amount; i++) {
-            let asteroid = new CelestialObject(scene, type, level, ship_x, ship_y);
+            let asteroid = new Asteroid(scene, type, level, null, null, null, ship_x, ship_y);
             this.asteroids.push(asteroid);
         }
     }
 
     createChildAsteroids(amount, level, ship_x, ship_y, scene, x, y, scale) {
         for (let i = 0; i < amount; i++) {
-            let asteroid = new CelestialObject(scene, 'child_asteroid', level, ship_x, ship_y);
-            asteroid.sprite.setPosition(x, y);
-            asteroid.sprite.setScale(scale);
-            this.asteroids.push(asteroid);
+            let asteroid = new Asteroid(scene, 'child_asteroid', level, {
+                x: x,
+                y: y
+            }, scale, (Util.getRandomInt(-80, 80) / 10) + 2, ship_x, ship_y);
+            // asteroid.sprite.setPosition(x, y);
+            // asteroid.sprite.setScale(scale);
+            this.childAsteroids.push(asteroid);
         }
     }
 
@@ -174,51 +216,73 @@ export default class LevelScene extends Phaser.Scene {
      */
     update() {
         if (this.alive) {
-            if (this.cursors.up.isDown) {
+            if (this.controls.cursors.up.isDown) {
                 this.ship.accelerate();
             }
-            else if (this.cursors.down.isDown) {
+            else if (this.controls.cursors.down.isDown) {
                 this.ship.deAccelerate();
             }
             else {
                 this.ship.noAcceleration();
             }
 
-            if (this.cursors.left.isDown) {
+            if (this.controls.cursors.left.isDown) {
                 this.ship.turnLeft();
             }
-            else if (this.cursors.right.isDown) {
+            else if (this.controls.cursors.right.isDown) {
                 this.ship.turnRight();
             }
             else {
                 this.ship.neutral();
             }
 
-            if (this.space.isDown) {
+            if (this.controls.space.isDown) {
                 this.ship.fireLasers()
             } else {
                 this.ship.stopFireLasers();
             }
 
-            if (this.ctrl.isDown) {
+            if (this.controls.ctrl.isDown) {
                 this.ship.fireRockets()
             } else {
                 this.ship.stopFireRockets();
             }
 
             this.ship.update();
+            this.checkCollisionsAndUpdate();
 
-            for (let asteroid of this.asteroids) {
-                asteroid.update();
-                this.physics.world.collide(this.ship.sprite, asteroid.sprite, this.onShipCollisionEvent, null, this);
-                for (let laser of this.ship.lasers.lasers) {
-                    this.physics.world.overlap(asteroid.sprite, laser, this.onLaserCollisionEvent, null, this);
-                }
-            }
+
         }
         else {
-            for (let asteroid of this.asteroids) {
-                asteroid.update();
+
+            this.updateCelestialObjects();
+
+        }
+    }
+
+    updateCelestialObjects() {
+        for (let asteroid of this.asteroids) {
+            asteroid.update();
+        }
+        for (let childAsteroid of this.childAsteroids) {
+            childAsteroid.update();
+        }
+    }
+
+    checkCollisionsAndUpdate() {
+        for (let asteroid of this.asteroids) {
+            asteroid.update();
+            this.physics.world.collide(this.ship.sprite, asteroid.sprite, this.onShipCollisionEvent, null, this);
+            for (let laser of this.ship.lasers.lasers) {
+                this.physics.world.overlap(asteroid.sprite, laser, this.onLaserAsteroidCollisionEvent, null, this);
+            }
+        }
+
+        for (let childAsteroid of this.childAsteroids) {
+            childAsteroid.update();
+            this.physics.world.collide(this.ship.sprite, childAsteroid.sprite, this.onShipCollisionEvent, null, this);
+            for (let laser of this.ship.lasers.lasers) {
+                this.physics.world.overlap(childAsteroid.sprite, laser, this.onLaserChildAsteroidCollisionEvent, null, this);
             }
         }
     }
@@ -244,44 +308,31 @@ export default class LevelScene extends Phaser.Scene {
         }
     }
 
-    onLaserCollisionEvent(asteroidSprite, laser) {
-        // console.log("Laser collision event fired!");
-        // console.log(asteroid);
-        // console.log(laser);
-        let explosion = this.add.sprite(asteroidSprite.x, asteroidSprite.y, 'explosion');
-        explosion.setScale(asteroidSprite.scaleX * 2);
-        if (this.isOriginalAsteroid(asteroidSprite, this.asteroids)) {
-            let modifier = 0;
-            if (asteroidSprite.scaleX < 0.5) {
-                modifier = 2;
-            } else {
-                modifier = 3;
-            }
-            this.createChildAsteroids(modifier, this.level, this.ship.sprite.x, this.ship.sprite.y, this, asteroidSprite.x, asteroidSprite.y, (asteroidSprite.scaleX / modifier));
+    onLaserAsteroidCollisionEvent(asteroidSprite, laser) {
+        this.explosion(asteroidSprite.x, asteroidSprite.y, asteroidSprite.scaleX * 2);
+        let modifier = 0;
+        if (asteroidSprite.scaleX < 0.5) {
+            modifier = 2;
+        } else {
+            modifier = 3;
         }
-
+        this.createChildAsteroids(modifier, this.level, this.ship.sprite.x, this.ship.sprite.y, this, asteroidSprite.x, asteroidSprite.y, (asteroidSprite.scaleX / modifier));
         laser.destroy();
         asteroidSprite.destroy();
-        // for(let laser of this.ship.laser.lasers) {
         this.ship.lasers.lasers.splice(this.ship.lasers.lasers.indexOf(laser));
-        // }
-        //
-        // for (let slaser of this.ship.laser.lasers) {
-        //     if(slaser.x  < (explosion.centerX+explosion.width) && slaser.x > (explosion.centerX-explosion.width) && slaser.y < (explosion.centerY+explosion.height) && slaser.y > (explosion.centerY-explosion.height) ){
-        //         //console.log("lx:"+slaser.x+" ly:"+slaser.y+" ex:"+explosion.x+" ey:"+explosion.y);
-        //         slaser.destroy();
-        //         this.ship.laser.lasers.splice(this.ship.laser.lasers.indexOf(slaser));
-        //     }
-        //
-        // }
+    }
 
+    onLaserChildAsteroidCollisionEvent(asteroidSprite, laser) {
+        this.explosion(asteroidSprite.x, asteroidSprite.y, asteroidSprite.scaleX * 2);
+        laser.destroy();
+        asteroidSprite.destroy();
+        this.ship.lasers.lasers.splice(this.ship.lasers.lasers.indexOf(laser));
+    }
 
+    explosion(x, y, scale) {
+        let explosion = this.add.sprite(x, y, 'explosion');
+        explosion.setScale(scale);
         explosion.anims.play('explode');
-        // for (let asteroid of this.asteroids) {
-        //     if(asteroid.sprite === asteroidSprite) {
-        //         this.asteroids.splice(this.asteroids.indexOf(asteroid));
-        //     }
-        // }
     }
 
 
@@ -302,17 +353,17 @@ export default class LevelScene extends Phaser.Scene {
         }
     }
 
-    isOriginalAsteroid(sprite, collection) {
-        for (let object of collection) {
-            if (object instanceof CelestialObject) {
-                if (sprite === object.sprite) {
-                    console.log(object.object_type);
-                    return object.object_type === 'asteroid';
-                }
-            }
-        }
-        return null;
-    }
+    // isOriginalAsteroid(sprite, collection) {
+    //     for (let object of collection) {
+    //         if (object instanceof Asteroid) {
+    //             if (sprite === object.sprite) {
+    //                 console.log(object.object_type);
+    //                 return object.object_type === 'asteroid';
+    //             }
+    //         }
+    //     }
+    //     return null;
+    // }
 
     // RespawnEvent() {
     //     if (!this.alive) {
