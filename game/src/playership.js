@@ -1,5 +1,6 @@
 import Util from './util.js'
 import Laser from './laser.js'
+import Rocket from './rocket.js'
 
 /**
  * @classdesc
@@ -10,6 +11,7 @@ import Laser from './laser.js'
  * @constructor scene - The current Phaser.Scene
  */
 export default class PlayerShip extends Phaser.GameObjects.Sprite {
+
     constructor(scene) {
         super(scene);
         this._scene = scene;
@@ -18,7 +20,8 @@ export default class PlayerShip extends Phaser.GameObjects.Sprite {
         this._invulnerable = false;
         this._shipEmitter = null;
         this._emitterDeathZone = null;
-        this._laser = null;
+        this._lasers = null;
+        this._rockets = null;
         this.create(scene);
     }
 
@@ -27,12 +30,21 @@ export default class PlayerShip extends Phaser.GameObjects.Sprite {
      */
 
     //Laser
-    get laser() {
-        return this._laser;
+    get lasers() {
+        return this._lasers;
     }
 
-    set laser(value) {
-        this._laser = value;
+    set lasers(value) {
+        this._lasers = value;
+    }
+
+    //Rockets
+    get rockets() {
+        return this._rockets;
+    }
+
+    set rockets(value) {
+        this._rockets = value;
     }
 
     //EmitterDeathZone
@@ -118,7 +130,8 @@ export default class PlayerShip extends Phaser.GameObjects.Sprite {
         this.sprite.angle = -90;
         this.sprite.setCollideWorldBounds(false);
         this.emitterDeathZone = new Phaser.Geom.Circle(this.sprite.x, this.sprite.y, 50);
-        this.laser = new Laser(this.scene, 58);
+        this.lasers = new Laser(this.scene, 58);
+        this.rockets = new Rocket(this.scene, 58);
         //console.log("Disable invulnerability event started");
         this.setVulnerabilityState(this, 2000, false);
     }
@@ -137,7 +150,8 @@ export default class PlayerShip extends Phaser.GameObjects.Sprite {
         this.emitterDeathZone.setPosition(deathzonePosition.x, deathzonePosition.y);
         this.shipEmitter.setDeathZone(new Phaser.GameObjects.Particles.Zones.DeathZone(this.emitterDeathZone, true));
         // this.laser.update(this.sprite.x, this.sprite.y, this.sprite.angle);
-        this.laser.update();
+        this.lasers.update();
+        this.rockets.update();
     }
 
     /**
@@ -199,15 +213,29 @@ export default class PlayerShip extends Phaser.GameObjects.Sprite {
     /**
      * Fire teh lazers!!
      */
-    fire() {
-        this.laser.fire(this.sprite.x, this.sprite.y, this.sprite.angle);
+    fireLasers() {
+        this.lasers.fire(this.sprite.x, this.sprite.y, this.sprite.angle);
     }
 
     /**
      * Stop firing
      */
-    stopFire() {
-        this.laser.stopFire();
+    stopFireLasers() {
+        this.lasers.stopFire();
+    }
+
+    /**
+     * Fire teh lazers!!
+     */
+    fireRockets() {
+        this.rockets.fire(this.sprite.x, this.sprite.y, this.sprite.angle);
+    }
+
+    /**
+     * Stop firing
+     */
+    stopFireRockets() {
+        this.rockets.stopFire();
     }
 
     /**
@@ -219,7 +247,8 @@ export default class PlayerShip extends Phaser.GameObjects.Sprite {
 
         this.sprite.destroy();
         this.shipEmitter.on = false;
-        this.stopFire();
+        this.stopFireLasers();
+        this.stopFireRockets();
 
         let particles = this.scene.add.particles('blue');
         let explosion = particles.createEmitter({
