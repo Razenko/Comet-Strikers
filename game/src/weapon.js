@@ -13,13 +13,18 @@ export default class Weapon extends Phaser.GameObjects.Sprite {
         super(scene);
         this._scene = scene;
         this._distance = distance;
-        this._texture = texture;
+        //this._texture = texture;
         this._elements = [];
         this._delay = delay;
         this._delayCounter = 0;
-        this._scale = scale;
-        this._alpha = alpha;
+        // this._scale = scale;
+        // this._alpha = alpha;
         this._speed = speed;
+        this._spriteConfig = {
+            texture: texture,
+            scale: scale,
+            alpha: alpha
+        }
     }
 
     /**
@@ -35,32 +40,43 @@ export default class Weapon extends Phaser.GameObjects.Sprite {
         this._elements = value;
     }
 
-    //Scale
-    get scale() {
-        return this._scale;
+
+    //SpriteConfig
+    get spriteConfig() {
+        return this._spriteConfig;
     }
 
-    set scale(value) {
-        this._scale = value;
+    set spriteConfig(value) {
+        this._spriteConfig = value;
     }
 
-    //Alpha
-    get alpha() {
-        return this._alpha;
-    }
 
-    set alpha(value) {
-        this._alpha = value;
-    }
-
-    //Texture
-    get texture() {
-        return this._texture;
-    }
-
-    set texture(value) {
-        this._texture = value;
-    }
+    // //Scale
+    // get scale() {
+    //     return this._scale;
+    // }
+    //
+    // set scale(value) {
+    //     this._scale = value;
+    // }
+    //
+    // //Alpha
+    // get alpha() {
+    //     return this._alpha;
+    // }
+    //
+    // set alpha(value) {
+    //     this._alpha = value;
+    // }
+    //
+    // //Texture
+    // get texture() {
+    //     return this._texture;
+    // }
+    //
+    // set texture(value) {
+    //     this._texture = value;
+    // }
 
     //Distance
     get distance() {
@@ -161,12 +177,16 @@ export default class Weapon extends Phaser.GameObjects.Sprite {
         }
     }
 
+    removeElement(element) {
+        this.elements.splice(this.elements.indexOf(element));
+    }
+
     /**
      * Fire the lasers!!
      */
     fire(ship_x, ship_y, ship_angle) {
         if (this.delayCounter < 1) {
-            this.create(ship_x, ship_y, ship_angle, 2, this.distance, this.texture, this.scale, this.alpha);
+            this.create(ship_x, ship_y, ship_angle, 2, this.distance, this.spriteConfig.texture, this.spriteConfig.scale, this.spriteConfig.alpha);
             this.delayCounter = this.delay;
             //console.log(this.lasers.length)
         }

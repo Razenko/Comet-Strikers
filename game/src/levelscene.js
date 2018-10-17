@@ -1,7 +1,7 @@
 import Util from './util.js'
 import PlayerShip from './playership.js'
-// import CelestialObject from './celestialobject.js'
 import Asteroid from './asteroid.js'
+import Comet from './comet.js'
 
 /**
  * @classdesc
@@ -17,9 +17,6 @@ export default class LevelScene extends Phaser.Scene {
             key: 'LevelScene'
         });
         this._ship = null;
-        // this._cursors = null;
-        // this._space = null;
-        // this._ctrl = null;
         this._controls = null;
         this._asteroids = [];
         this._childAsteroids = [];
@@ -50,34 +47,6 @@ export default class LevelScene extends Phaser.Scene {
     set controls(value) {
         this._controls = value;
     }
-
-    //
-    // //Cursors
-    // get cursors() {
-    //     return this._cursors;
-    // }
-    //
-    // set cursors(value) {
-    //     this._cursors = value;
-    // }
-    //
-    // //Space
-    // get space() {
-    //     return this._space;
-    // }
-    //
-    // set space(value) {
-    //     this._space = value;
-    // }
-    //
-    // //Ctrl
-    // get ctrl() {
-    //     return this._ctrl;
-    // }
-    //
-    // set ctrl(value) {
-    //     this._ctrl = value;
-    // }
 
     //Asteroids
     get asteroids() {
@@ -143,6 +112,7 @@ export default class LevelScene extends Phaser.Scene {
         this.load.image('ship', './game/assets/ship.png');
         this.load.image('blue', './game/assets/blue_particle.png');
         this.load.image('asteroid1', './game/assets/asteroid1.png');
+        this.load.image('comet1', './game/assets/comet1.png');
         this.load.image('laser', './game/assets/laser.png');
         this.load.image('rocket', './game/assets/rocket.png');
         this.load.spritesheet('explosion', './game/assets/explosion.png', {
@@ -159,7 +129,8 @@ export default class LevelScene extends Phaser.Scene {
     create() {
         this.add.image(400, 300, 'bg');
         this.ship = new PlayerShip(this);
-        this.createAsteroids(4 + this.level, 'asteroid', this.level, this.ship.sprite.x, this.ship.sprite.y, this);
+        this.createAsteroids(3 + this.level, this.level, this.ship.sprite.x, this.ship.sprite.y, this);
+        this.createComets(this.level, this.level, this.ship.sprite.x, this.ship.sprite.y, this);
 
         this.controls = {
             cursors: this.input.keyboard.createCursorKeys(),
@@ -167,17 +138,13 @@ export default class LevelScene extends Phaser.Scene {
             ctrl: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.CTRL)
         };
 
-        // this.cursors = this._input.keyboard.createCursorKeys();
-        // this.space = this._input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
-        // this.ctrl = this._input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.CTRL);
-
-        let config = {
+        let explosion = {
             key: 'explode',
             frames: this.anims.generateFrameNumbers('explosion', {start: 0, end: 16, first: 16}),
             frameRate: 20
         };
 
-        this.anims.create(config);
+        this.anims.create(explosion);
     }
 
     /**
@@ -190,22 +157,27 @@ export default class LevelScene extends Phaser.Scene {
      * @param ship_y - The current vertical (y-axis) posiyion of the player
      * @param scene - The current Phaser.Scene
      */
-    createAsteroids(amount, type, level, ship_x, ship_y, scene) {
+    createAsteroids(amount, level, ship_x, ship_y, scene) {
         for (let i = 0; i < amount; i++) {
-            let asteroid = new Asteroid(scene, type, level, null, null, null, ship_x, ship_y);
+            let asteroid = new Asteroid(scene, level, 'asteroid1', null, null, null, {x: ship_x, y: ship_y});
             this.asteroids.push(asteroid);
         }
     }
 
     createChildAsteroids(amount, level, ship_x, ship_y, scene, x, y, scale) {
         for (let i = 0; i < amount; i++) {
-            let asteroid = new Asteroid(scene, 'child_asteroid', level, {
+            let asteroid = new Asteroid(scene, level, 'asteroid1', {
                 x: x,
                 y: y
-            }, scale, (Util.getRandomInt(-80, 80) / 10) + 2, ship_x, ship_y);
-            // asteroid.sprite.setPosition(x, y);
-            // asteroid.sprite.setScale(scale);
+            }, scale, (Util.getRandomInt(-80, 80) / 10) + 2, {x: ship_x, y: ship_y});
             this.childAsteroids.push(asteroid);
+        }
+    }
+
+    createComets(amount, level, ship_x, ship_y, scene) {
+        for (let i = 0; i < amount; i++) {
+            let comet = new Comet(scene, level, 'comet1', null, null, null, {x: ship_x, y: ship_y});
+            this.comets.push(comet);
         }
     }
 
@@ -216,47 +188,46 @@ export default class LevelScene extends Phaser.Scene {
      */
     update() {
         if (this.alive) {
-            if (this.controls.cursors.up.isDown) {
-                this.ship.accelerate();
-            }
-            else if (this.controls.cursors.down.isDown) {
-                this.ship.deAccelerate();
-            }
-            else {
-                this.ship.noAcceleration();
-            }
-
-            if (this.controls.cursors.left.isDown) {
-                this.ship.turnLeft();
-            }
-            else if (this.controls.cursors.right.isDown) {
-                this.ship.turnRight();
-            }
-            else {
-                this.ship.neutral();
-            }
-
-            if (this.controls.space.isDown) {
-                this.ship.fireLasers()
-            } else {
-                this.ship.stopFireLasers();
-            }
-
-            if (this.controls.ctrl.isDown) {
-                this.ship.fireRockets()
-            } else {
-                this.ship.stopFireRockets();
-            }
-
+            this.checkInput();
             this.ship.update();
             this.checkCollisionsAndUpdate();
-
-
         }
         else {
-
             this.updateCelestialObjects();
+        }
+    }
 
+    checkInput() {
+        if (this.controls.cursors.up.isDown) {
+            this.ship.accelerate();
+        }
+        else if (this.controls.cursors.down.isDown) {
+            this.ship.deAccelerate();
+        }
+        else {
+            this.ship.noAcceleration();
+        }
+
+        if (this.controls.cursors.left.isDown) {
+            this.ship.turnLeft();
+        }
+        else if (this.controls.cursors.right.isDown) {
+            this.ship.turnRight();
+        }
+        else {
+            this.ship.neutral();
+        }
+
+        if (this.controls.space.isDown) {
+            this.ship.fireLasers()
+        } else {
+            this.ship.stopFireLasers();
+        }
+
+        if (this.controls.ctrl.isDown) {
+            this.ship.fireRockets()
+        } else {
+            this.ship.stopFireRockets();
         }
     }
 
@@ -267,6 +238,9 @@ export default class LevelScene extends Phaser.Scene {
         for (let childAsteroid of this.childAsteroids) {
             childAsteroid.update();
         }
+        for (let comet of this.comets) {
+            comet.update();
+        }
     }
 
     checkCollisionsAndUpdate() {
@@ -276,6 +250,9 @@ export default class LevelScene extends Phaser.Scene {
             for (let laser of this.ship.lasers.lasers) {
                 this.physics.world.overlap(asteroid.sprite, laser, this.onLaserAsteroidCollisionEvent, null, this);
             }
+            for (let rocket of this.ship.rockets.rockets) {
+                this.physics.world.overlap(asteroid.sprite, rocket, this.onRocketCollisionEvent, null, this);
+            }
         }
 
         for (let childAsteroid of this.childAsteroids) {
@@ -284,7 +261,23 @@ export default class LevelScene extends Phaser.Scene {
             for (let laser of this.ship.lasers.lasers) {
                 this.physics.world.overlap(childAsteroid.sprite, laser, this.onLaserChildAsteroidCollisionEvent, null, this);
             }
+            for (let rocket of this.ship.rockets.rockets) {
+                this.physics.world.overlap(childAsteroid.sprite, rocket, this.onRocketCollisionEvent, null, this);
+            }
         }
+
+        for (let comet of this.comets) {
+            comet.update();
+            this.physics.world.collide(this.ship.sprite, comet.sprite, this.onShipCollisionEvent, null, this);
+            for (let laser of this.ship.lasers.lasers) {
+                this.physics.world.overlap(comet.sprite, laser, this.onLaserCometCollisionEvent, null, this);
+            }
+            for (let rocket of this.ship.rockets.rockets) {
+                this.physics.world.overlap(comet.sprite, rocket, this.onRocketCollisionEvent, null, this);
+            }
+        }
+
+
     }
 
     /**
@@ -319,14 +312,31 @@ export default class LevelScene extends Phaser.Scene {
         this.createChildAsteroids(modifier, this.level, this.ship.sprite.x, this.ship.sprite.y, this, asteroidSprite.x, asteroidSprite.y, (asteroidSprite.scaleX / modifier));
         laser.destroy();
         asteroidSprite.destroy();
-        this.ship.lasers.lasers.splice(this.ship.lasers.lasers.indexOf(laser));
+        // this.ship.lasers.lasers.splice(this.ship.lasers.lasers.indexOf(laser));
+        this.ship.lasers.removeElement(laser);
     }
 
     onLaserChildAsteroidCollisionEvent(asteroidSprite, laser) {
         this.explosion(asteroidSprite.x, asteroidSprite.y, asteroidSprite.scaleX * 2);
         laser.destroy();
         asteroidSprite.destroy();
-        this.ship.lasers.lasers.splice(this.ship.lasers.lasers.indexOf(laser));
+        //this.ship.lasers.lasers.splice(this.ship.lasers.lasers.indexOf(laser));
+        this.ship.lasers.removeElement(laser);
+    }
+
+    onLaserCometCollisionEvent(cometSprite, laser) {
+        this.explosion(laser.x, laser.y, cometSprite.scaleX * 0.5);
+        laser.destroy();
+        //this.ship.lasers.lasers.splice(this.ship.lasers.lasers.indexOf(laser));
+        this.ship.lasers.removeElement(laser);
+    }
+
+    onRocketCollisionEvent(sprite, rocket) {
+        this.explosion(sprite.x, sprite.y, sprite.scaleX * 2);
+        rocket.destroy();
+        sprite.destroy();
+        //this.ship.lasers.lasers.splice(this.ship.lasers.lasers.indexOf(laser));
+        this.ship.rockets.removeElement(rocket);
     }
 
     explosion(x, y, scale) {
