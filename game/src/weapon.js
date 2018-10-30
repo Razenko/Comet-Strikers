@@ -131,6 +131,10 @@ export default class Weapon extends Phaser.GameObjects.Sprite {
      * @param ship_y - Vertical position of the ship
      * @param ship_angle - Angle of the ship
      * @param amount - The number of laser objects to create
+     * @param distance
+     * @param texture
+     * @param scale
+     * @param alpha
      */
     create(ship_x, ship_y, ship_angle, amount, distance, texture, scale, alpha) {
         let currentDistance = 0;
