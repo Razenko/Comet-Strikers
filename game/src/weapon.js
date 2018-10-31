@@ -2,23 +2,21 @@ import Util from './util.js'
 
 /**
  * @classdesc
- * This class represents the laser cannon element the player uses as weapons on his ship.
- * @class Laser
+ * This class represents a weapon element the player uses as offensive tools on his ship.
+ * @class Weapon
  * @extends Phaser.GameObjects.Sprite
  * @constructor scene - The current Phaser.Scene
- * @constructor distance - The distance (spacing) between the individual lasers
+ * @constructor distance - The distance (spacing) between the individual elements
  */
 export default class Weapon extends Phaser.GameObjects.Sprite {
     constructor(scene, distance, delay, speed, texture, scale, alpha) {
         super(scene);
         this._scene = scene;
         this._distance = distance;
-        //this._texture = texture;
         this._elements = [];
         this._delay = delay;
         this._delayCounter = 0;
-        // this._scale = scale;
-        // this._alpha = alpha;
+        this._amount = null;
         this._speed = speed;
         this._spriteConfig = {
             texture: texture,
@@ -40,7 +38,6 @@ export default class Weapon extends Phaser.GameObjects.Sprite {
         this._elements = value;
     }
 
-
     //SpriteConfig
     get spriteConfig() {
         return this._spriteConfig;
@@ -49,34 +46,6 @@ export default class Weapon extends Phaser.GameObjects.Sprite {
     set spriteConfig(value) {
         this._spriteConfig = value;
     }
-
-
-    // //Scale
-    // get scale() {
-    //     return this._scale;
-    // }
-    //
-    // set scale(value) {
-    //     this._scale = value;
-    // }
-    //
-    // //Alpha
-    // get alpha() {
-    //     return this._alpha;
-    // }
-    //
-    // set alpha(value) {
-    //     this._alpha = value;
-    // }
-    //
-    // //Texture
-    // get texture() {
-    //     return this._texture;
-    // }
-    //
-    // set texture(value) {
-    //     this._texture = value;
-    // }
 
     //Distance
     get distance() {
@@ -114,6 +83,15 @@ export default class Weapon extends Phaser.GameObjects.Sprite {
         this._delayCounter = value;
     }
 
+    //Amount
+    get amount() {
+        return this._amount;
+    }
+
+    set amount(value) {
+        this._amount = value;
+    }
+
     //Speed
     get speed() {
         return this._speed;
@@ -125,16 +103,16 @@ export default class Weapon extends Phaser.GameObjects.Sprite {
 
 
     /**
-     * Creates a given number of laser objects.
+     * Creates a given number of weapon objects.
      * @method create
      * @param ship_x - Horizontal position of the ship
      * @param ship_y - Vertical position of the ship
      * @param ship_angle - Angle of the ship
      * @param amount - The number of laser objects to create
-     * @param distance
-     * @param texture
-     * @param scale
-     * @param alpha
+     * @param distance - distance between objects
+     * @param texture - Texture (bitmap) to use
+     * @param scale - Scale
+     * @param alpha - Alpha blend level
      */
     create(ship_x, ship_y, ship_angle, amount, distance, texture, scale, alpha) {
         let currentDistance = 0;
@@ -153,7 +131,7 @@ export default class Weapon extends Phaser.GameObjects.Sprite {
     }
 
     /**
-     * Update the positioning of the lasers relative to the position of the ship.
+     * Update the positioning of the elements relative to the position of the ship.
      * @method update
      */
     update() {
@@ -170,8 +148,8 @@ export default class Weapon extends Phaser.GameObjects.Sprite {
     }
 
     /**
-     * Cleans out the laser array of objects that are no longer in the playing field.
-     * @param purgebuffer - Array of lasers due for removal.
+     * Cleans out the element array of objects that are no longer in the playing field.
+     * @param purgebuffer - Array of elements due for removal.
      */
     cleanElementArray(purgebuffer) {
         if (purgebuffer.length > 0) {
@@ -186,15 +164,19 @@ export default class Weapon extends Phaser.GameObjects.Sprite {
     }
 
     /**
-     * Fire the lasers!!
+     * Fire!!
      */
     fire(ship_x, ship_y, ship_angle) {
-        if (this.delayCounter < 1) {
-            this.create(ship_x, ship_y, ship_angle, 2, this.distance, this.spriteConfig.texture, this.spriteConfig.scale, this.spriteConfig.alpha);
-            this.delayCounter = this.delay;
-            //console.log(this.lasers.length)
+        if (this.amount == null || this.amount > 0) {
+            if (this.delayCounter < 1) {
+                this.create(ship_x, ship_y, ship_angle, 2, this.distance, this.spriteConfig.texture, this.spriteConfig.scale, this.spriteConfig.alpha);
+                this.delayCounter = this.delay;
+                if (this.amount != null) {
+                    this.amount--;
+                }
+            }
+            this.delayCounter--;
         }
-        this.delayCounter--;
     }
 
     /**

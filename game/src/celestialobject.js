@@ -12,17 +12,13 @@ import Util from './util.js'
  * @constructor ship_y - The ship's y-axis
  */
 export default class CelestialObject extends Phaser.GameObjects.Sprite {
-    constructor(scene, level, texture, spawnpoint, scale, rotation, ship) {
+
+    constructor(scene, level, name, texture, spawnpoint, scale, rotation, ship) {
         super(scene);
         this._scene = scene;
         this._level = level;
-        // this._object_type = object_type;
-        // this._spawnpoint = spawnpoint;
-        // this._scale = scale;
-        // this._ship_x = ship_x;
-        // this._ship_y = ship_y;
+        this._name = name;
         this._sprite = null;
-        // this._rotation = rotation;
         this._spriteConfig = {
             texture: texture,
             spawnpoint: spawnpoint,
@@ -31,7 +27,6 @@ export default class CelestialObject extends Phaser.GameObjects.Sprite {
             rotation: rotation,
             ship: ship
         }
-        //this.create();
     }
 
     /**
@@ -56,42 +51,6 @@ export default class CelestialObject extends Phaser.GameObjects.Sprite {
         this._spriteConfig = value;
     }
 
-    // //Object_type
-    // get object_type() {
-    //     return this._object_type;
-    // }
-    //
-    // set object_type(value) {
-    //     this._object_type = value;
-    // }
-    //
-    // //Spawnpoint
-    // get spawnpoint() {
-    //     return this._spawnpoint;
-    // }
-    //
-    // set spawnpoint(value) {
-    //     this._spawnpoint = value;
-    // }
-    //
-    // //Scale
-    // get scale() {
-    //     return this._scale;
-    // }
-    //
-    // set scale(value) {
-    //     this._scale = value;
-    // }
-    //
-    // //Rotation
-    // get rotation() {
-    //     return this._rotation;
-    // }
-    //
-    // set rotation(value) {
-    //     this._rotation = value;
-    // }
-
     //Level
     get level() {
         return this._level;
@@ -101,24 +60,13 @@ export default class CelestialObject extends Phaser.GameObjects.Sprite {
         this._level = value;
     }
 
-    //
-    // //Ship_x
-    // get ship_x() {
-    //     return this._ship_x;
-    // }
-    //
-    // set ship_x(value) {
-    //     this._ship_x = value;
-    // }
-    //
-    // //Ship_y
-    // get ship_y() {
-    //     return this._ship_y;
-    // }
-    //
-    // set ship_y(value) {
-    //     this._ship_y = value;
-    // }
+    get name() {
+        return this._name;
+    }
+
+    set name(value) {
+        this._name = value;
+    }
 
     //Sprite
     get sprite() {
@@ -133,10 +81,6 @@ export default class CelestialObject extends Phaser.GameObjects.Sprite {
      * Create a new asteroid or comet
      */
     create() {
-        // const sizeBoundaries = { //Minimum and maximum size of the sprite in percentages based on original image
-        //     min: 35,
-        //     max: 65
-        // };
         if (this.spriteConfig.spawnpoint == null) {
             this.spriteConfig.spawnpoint = CelestialObject.getSafeSpawnpoint(this.spriteConfig.ship.x, this.spriteConfig.ship.y);
         }
@@ -147,10 +91,11 @@ export default class CelestialObject extends Phaser.GameObjects.Sprite {
             this.spriteConfig.rotation = Util.getRandomInt(-20, 20) / 10;
         }
         this.sprite = this.scene.physics.add.image(this.spriteConfig.spawnpoint.x, this.spriteConfig.spawnpoint.y, this.spriteConfig.texture);
+        this.sprite.name = this.name;
         this.sprite.setCircle(70);
         this.sprite.setScale(this.spriteConfig.scale);
         this.sprite.setMaxVelocity(200);
-        this.sprite.setVelocity(Util.getRandomInt(-100, 100), Util.getRandomInt(-100, 100));
+        this.sprite.setVelocity(CelestialObject.getValidRandomVelocity(), CelestialObject.getValidRandomVelocity());
         this.sprite.setBounce(1, 1);
         this.sprite.setCollideWorldBounds(false);
     }
@@ -161,6 +106,19 @@ export default class CelestialObject extends Phaser.GameObjects.Sprite {
     update() {
         this.sprite.angle += this.spriteConfig.rotation;
         this.scene.physics.world.wrap(this.sprite, 64);
+    }
+
+    /**
+     * Get a valid randomized velocity value (to prevent very slow movement)
+     * @returns {number} - Random integer
+     */
+    static getValidRandomVelocity() {
+        let velocity = 0;
+        while (velocity > -50 && velocity < 50) {
+            velocity = Util.getRandomInt(-100, 100);
+        }
+
+        return velocity;
     }
 
 

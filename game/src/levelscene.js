@@ -2,6 +2,7 @@ import Util from './util.js'
 import PlayerShip from './playership.js'
 import Asteroid from './asteroid.js'
 import Comet from './comet.js'
+import UIElements from './uielements.js'
 
 /**
  * @classdesc
@@ -14,7 +15,7 @@ import Comet from './comet.js'
 export default class LevelScene extends Phaser.Scene {
     constructor(level) {
         super({
-            key: 'LevelScene'
+            key: 'level' + level
         });
         this._ship = null;
         this._controls = null;
@@ -23,7 +24,14 @@ export default class LevelScene extends Phaser.Scene {
         this._comets = [];
         this._level = level;
         this._alive = true;
+        this._active = true;
         this._lives = 3;
+        this._objecttracker = {
+            asteroids: 0,
+            childasteroids: 0,
+            comets: 0
+        };
+        this._ui = null;
     }
 
     /**
@@ -93,6 +101,15 @@ export default class LevelScene extends Phaser.Scene {
         this._alive = value;
     }
 
+    //Active
+    get active() {
+        return this._active;
+    }
+
+    set active(value) {
+        this._active = value;
+    }
+
     //Lives
     get lives() {
         return this._lives;
@@ -102,19 +119,43 @@ export default class LevelScene extends Phaser.Scene {
         this._lives = value;
     }
 
+    //Objecttracker
+    get objecttracker() {
+        return this._objecttracker;
+    }
+
+    set objecttracker(value) {
+        this._objecttracker = value;
+    }
+
+    //UI
+    get ui() {
+        return this._ui;
+    }
+
+    set ui(value) {
+        this._ui = value;
+    }
+
 
     /**
      * Preload game data, such as sprite graphics and sounds.
      * @method preload
      */
     preload() {
-        this.load.image('bg', './game/assets/earth1.jpg');
+        this.load.image('bg1', './game/assets/earth1.jpg');
+        this.load.image('bg2', './game/assets/earth2.jpg');
+        this.load.image('bg3', './game/assets/earth3.jpg');
         this.load.image('ship', './game/assets/ship.png');
+        this.load.image('ship_icon', './game/assets/ship_icon.png');
         this.load.image('blue', './game/assets/blue_particle.png');
         this.load.image('asteroid1', './game/assets/asteroid1.png');
+        this.load.image('asteroid2', './game/assets/asteroid2.png');
         this.load.image('comet1', './game/assets/comet1.png');
         this.load.image('laser', './game/assets/laser.png');
         this.load.image('rocket', './game/assets/rocket.png');
+        this.load.image('rocket_icon', './game/assets/rocket_icon.png');
+        this.load.image('gameover', './game/assets/gameover.png');
         this.load.spritesheet('explosion', './game/assets/explosion.png', {
             frameWidth: 128,
             frameHeight: 128,
@@ -127,10 +168,17 @@ export default class LevelScene extends Phaser.Scene {
      * @method create
      */
     create() {
-        this.add.image(400, 300, 'bg');
-        this.ship = new PlayerShip(this);
+        this.add.image(400, 300, LevelScene.getRandomBackgroundImage());
+        this.ship = new PlayerShip(this, 3);
         this.createAsteroids(3 + this.level, this.level, this.ship.sprite.x, this.ship.sprite.y, this);
-        this.createComets(this.level, this.level, this.ship.sprite.x, this.ship.sprite.y, this);
+        this.createComets(this.level - 1, this.level, this.ship.sprite.x, this.ship.sprite.y, this);
+        this.objecttracker.asteroids = this.asteroids.length;
+        this.objecttracker.comets = this.comets.length;
+        this.ui = new UIElements(this, this.lives, this.ship.totalRockets, {x: 50, y: 30}, {
+            x: 670,
+            y: 30
+        }, 'ship_icon', 'rocket_icon', 1, 10);
+        this.ui.displayLevel("Level " + this.level);
 
         this.controls = {
             cursors: this.input.keyboard.createCursorKeys(),
@@ -151,7 +199,6 @@ export default class LevelScene extends Phaser.Scene {
      * Create a given number of asteroids and push them in the corresponding array.
      * @method createAsteroids
      * @param amount - Number of asteroids to create
-     * @param type - Object type (asteroid or comet)
      * @param level - The current level as integer (For difficulty modifiers)
      * @param ship_x - The current horizontal (x-axis) position of the player
      * @param ship_y - The current vertical (y-axis) posiyion of the player
@@ -159,14 +206,29 @@ export default class LevelScene extends Phaser.Scene {
      */
     createAsteroids(amount, level, ship_x, ship_y, scene) {
         for (let i = 0; i < amount; i++) {
-            let asteroid = new Asteroid(scene, level, 'asteroid1', null, null, null, {x: ship_x, y: ship_y});
+            let asteroid = new Asteroid(scene, level, 'asteroid', LevelScene.getRandomAsteroidTexture(), null, null, null, {
+                x: ship_x,
+                y: ship_y
+            });
             this.asteroids.push(asteroid);
         }
     }
 
-    createChildAsteroids(amount, level, ship_x, ship_y, scene, x, y, scale) {
+    /**
+     * Create smaller asteroids based on larger parent asteroids (crumbling)
+     * @param amount - Number of asteroids to create
+     * @param level - The current level as integer (For difficulty modifiers)
+     * @param ship_x - The current horizontal (x-axis) position of the player
+     * @param ship_y - The current vertical (y-axis) position of the player
+     * @param scene - The current Phaser.Scene
+     * @param texture - The texture (bitmap) sprite will use
+     * @param x - Initial x-axis start location
+     * @param y - Initial y-axis start location
+     * @param scale - Scaling factor of sprite
+     */
+    createChildAsteroids(amount, level, ship_x, ship_y, scene, texture, x, y, scale) {
         for (let i = 0; i < amount; i++) {
-            let asteroid = new Asteroid(scene, level, 'asteroid1', {
+            let asteroid = new Asteroid(scene, level, 'childasteroid', texture, {
                 x: x,
                 y: y
             }, scale, (Util.getRandomInt(-80, 80) / 10) + 2, {x: ship_x, y: ship_y});
@@ -174,9 +236,17 @@ export default class LevelScene extends Phaser.Scene {
         }
     }
 
+    /**
+     * Create the more challenging comets
+     * @param amount - Number of asteroids to create
+     * @param level - The current level as integer (For difficulty modifiers)
+     * @param ship_x - The current horizontal (x-axis) position of the player
+     * @param ship_y - The current vertical (y-axis) position of the player
+     * @param scene - The current Phaser.Scene
+     */
     createComets(amount, level, ship_x, ship_y, scene) {
         for (let i = 0; i < amount; i++) {
-            let comet = new Comet(scene, level, 'comet1', null, null, null, {x: ship_x, y: ship_y});
+            let comet = new Comet(scene, level, 'comet', 'comet1', null, null, null, {x: ship_x, y: ship_y});
             this.comets.push(comet);
         }
     }
@@ -187,16 +257,23 @@ export default class LevelScene extends Phaser.Scene {
      * @method update
      */
     update() {
-        if (this.alive) {
-            this.checkInput();
-            this.ship.update();
-            this.checkCollisionsAndUpdate();
-        }
-        else {
-            this.updateCelestialObjects();
+        if (this.active) {
+            if (this.alive) {
+                this.checkInput();
+                this.ship.update();
+                this.checkCollisionsAndUpdate();
+                this.updateUI();
+            }
+            else {
+                this.updateCelestialObjects();
+            }
+            this.checkLevelConditions(this);
         }
     }
 
+    /**
+     * Check user input and react to the respective keystrokes
+     */
     checkInput() {
         if (this.controls.cursors.up.isDown) {
             this.ship.accelerate();
@@ -231,6 +308,9 @@ export default class LevelScene extends Phaser.Scene {
         }
     }
 
+    /**
+     * Update the movement of all active comets and asteroids
+     */
     updateCelestialObjects() {
         for (let asteroid of this.asteroids) {
             asteroid.update();
@@ -243,6 +323,9 @@ export default class LevelScene extends Phaser.Scene {
         }
     }
 
+    /**
+     * Check for collisions and update movement
+     */
     checkCollisionsAndUpdate() {
         for (let asteroid of this.asteroids) {
             asteroid.update();
@@ -276,7 +359,40 @@ export default class LevelScene extends Phaser.Scene {
                 this.physics.world.overlap(comet.sprite, rocket, this.onRocketCollisionEvent, null, this);
             }
         }
+    }
 
+    /**
+     * Update UI changes
+     */
+    updateUI() {
+        if (this.ui.rockets.length > this.ship.rocketsAvailable) {
+            this.ui.decreaseRockets(1);
+        }
+    }
+
+    /**
+     * Check for winning or losing scenarios and either display a game over message or continue to the next level
+     * @param self - The current scene
+     */
+    checkLevelConditions(self) {
+        //win
+        if (this.objecttracker.asteroids < 1 && this.objecttracker.childasteroids < 1 && this.objecttracker.comets < 1) {
+            this.time.delayedCall(1000, function () {
+                self.level++;
+                self.scene.start('level' + self.level);
+            });
+        }
+
+        //lose
+        if (this.lives < 1) {
+            this.active = false;
+            this.ui.gameoverMessage("All of your ships were destroyed!!")
+        }
+
+        if (this.ship.rocketsAvailable < 1 && this.ship.rockets.rockets.length < 1 && this.objecttracker.comets > 0 && this.alive) {
+            this.active = false;
+            this.ui.gameoverMessage("No rockets left to kill the remaining comet(s)");
+        }
 
     }
 
@@ -286,21 +402,20 @@ export default class LevelScene extends Phaser.Scene {
      * @method onShipCollisionEvent
      */
     onShipCollisionEvent() {
-        // let respawntimer = this.time.addEvent({
-        //     delay: 4000,
-        //     callback: this.RespawnEvent,
-        //     callbackScope: this,
-        //     repeat: 1,
-        //     startAt: 2000
-        // })
         if (!this.ship.invulnerable) {
             this.alive = false;
             this.ship.explode();
             this.lives--;
+            this.ui.decreaseLives(1);
             this.shipSpawn(this, 3000);
         }
     }
 
+    /**
+     * Destroy the asteroid  when colliding with lasers and create new asteroid fragments (childAsteroids)
+     * @param asteroidSprite - The respective asteroid sprite that is in collision
+     * @param laser - The laser sprite responsible for said destruction
+     */
     onLaserAsteroidCollisionEvent(asteroidSprite, laser) {
         this.explosion(asteroidSprite.x, asteroidSprite.y, asteroidSprite.scaleX * 2);
         let modifier = 0;
@@ -309,36 +424,67 @@ export default class LevelScene extends Phaser.Scene {
         } else {
             modifier = 3;
         }
-        this.createChildAsteroids(modifier, this.level, this.ship.sprite.x, this.ship.sprite.y, this, asteroidSprite.x, asteroidSprite.y, (asteroidSprite.scaleX / modifier));
+        this.createChildAsteroids(modifier, this.level, this.ship.sprite.x, this.ship.sprite.y, this, asteroidSprite.texture.key, asteroidSprite.x, asteroidSprite.y, (asteroidSprite.scaleX / modifier));
+        this.objecttracker.childasteroids += modifier;
         laser.destroy();
         asteroidSprite.destroy();
-        // this.ship.lasers.lasers.splice(this.ship.lasers.lasers.indexOf(laser));
+        this.objecttracker.asteroids--;
         this.ship.lasers.removeElement(laser);
     }
 
+    /**
+     * Destroy asteroid fragments on collision with lasers
+     * @param asteroidSprite - The asteroid fragment sprite
+     * @param laser - The laser sprite
+     */
     onLaserChildAsteroidCollisionEvent(asteroidSprite, laser) {
         this.explosion(asteroidSprite.x, asteroidSprite.y, asteroidSprite.scaleX * 2);
         laser.destroy();
         asteroidSprite.destroy();
-        //this.ship.lasers.lasers.splice(this.ship.lasers.lasers.indexOf(laser));
+        this.objecttracker.childasteroids--;
         this.ship.lasers.removeElement(laser);
     }
 
+    /**
+     * Lasers are not strong enough to destroy comets, only leaving an explosion of impact
+     * @param cometSprite - Sprite of comet
+     * @param laser - Sprite of laser
+     */
     onLaserCometCollisionEvent(cometSprite, laser) {
         this.explosion(laser.x, laser.y, cometSprite.scaleX * 0.5);
         laser.destroy();
-        //this.ship.lasers.lasers.splice(this.ship.lasers.lasers.indexOf(laser));
         this.ship.lasers.removeElement(laser);
     }
 
+    /**
+     * Destruction of asteroids/comets due to rockets
+     * @param sprite - The asteroid/comet sprite
+     * @param rocket - The rocket sprite
+     */
     onRocketCollisionEvent(sprite, rocket) {
         this.explosion(sprite.x, sprite.y, sprite.scaleX * 2);
+        if (sprite.name === 'asteroid') {
+            this.objecttracker.asteroids--;
+        }
+        if (sprite.name === 'childasteroid') {
+            this.objecttracker.childasteroids--;
+
+        }
+        if (sprite.name === 'comet') {
+            this.objecttracker.comets--;
+        }
+
         rocket.destroy();
         sprite.destroy();
-        //this.ship.lasers.lasers.splice(this.ship.lasers.lasers.indexOf(laser));
         this.ship.rockets.removeElement(rocket);
     }
 
+    /**
+     * Create an animated explosion
+     * @param x - x-position
+     * @param y - y-position
+     * @param scale - scale
+     */
     explosion(x, y, scale) {
         let explosion = this.add.sprite(x, y, 'explosion');
         explosion.setScale(scale);
@@ -355,33 +501,27 @@ export default class LevelScene extends Phaser.Scene {
     shipSpawn(self, delay) {
         if (this.lives > 0) {
             this.time.delayedCall(delay, function () {
-                self.ship = new PlayerShip(self);
+                self.ship = new PlayerShip(self, self.ship.rocketsAvailable);
                 self.alive = true;
-                //self.invulnerable = true;
-                //self.sprite.setVulnerabilityState(true)
             });
         }
     }
 
-    // isOriginalAsteroid(sprite, collection) {
-    //     for (let object of collection) {
-    //         if (object instanceof Asteroid) {
-    //             if (sprite === object.sprite) {
-    //                 console.log(object.object_type);
-    //                 return object.object_type === 'asteroid';
-    //             }
-    //         }
-    //     }
-    //     return null;
-    // }
+    /**
+     * Return a random asteroid texture from array
+     * @returns {string} - return value
+     */
+    static getRandomAsteroidTexture() {
+        let textures = ['asteroid1', 'asteroid2'];
+        return textures[Util.getRandomInt(0, 1)];
+    }
 
-    // RespawnEvent() {
-    //     if (!this.alive) {
-    //         this.sprite = new PlayerShip(this);
-    //         this.alive = true;
-    //         this.invulnerable = true;
-    //     } else {
-    //         this.invulnerable = false;
-    //     }
-    // }
+    /**
+     * Return a random background image
+     * @returns {string} - return value
+     */
+    static getRandomBackgroundImage() {
+        let images = ['bg1', 'bg2', 'bg3'];
+        return images[Util.getRandomInt(0, 2)];
+    }
 }

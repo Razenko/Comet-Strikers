@@ -13,12 +13,10 @@ export default class Util {
      */
     static getAnglePos(distance, angle, x, y) {
         let radians = (angle + 180) * Math.PI / 180;
-        let position = {
+        return {
             x: x + Math.cos(radians) * distance,
             y: y + Math.sin(radians) * distance
         };
-
-        return position;
     }
 
     /**
