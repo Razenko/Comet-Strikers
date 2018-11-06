@@ -1,5 +1,15 @@
 /**
+ * @classdesc
  * Display UI elements such as ships left, rockets left and various other messages.
+ * @constructor scene - The current level scene
+ * @constructor startlives - The initial number of lives
+ * @constructor startrockets - The initial number of rockets
+ * @constructor livespos - Positioning of the lives icons
+ * @constructor rockerpos - Position of the rockets icons
+ * @constructor livestexture - Icon texture to be used for lives
+ * @constructor rocketstexture - Icon texture to be used for rockets
+ * @constructor scale - The scale (size) of the icons
+ * @constructor distance - The distance (spacing) between individual icons
  */
 export default class UIElements extends Phaser.GameObjects.Sprite {
     constructor(scene, startlives, startrockets, livespos, rocketspos, livestexture, rocketstexture, scale, distance) {
@@ -67,8 +77,7 @@ export default class UIElements extends Phaser.GameObjects.Sprite {
      */
     create(startlives, startrockets, spriteconfig) {
         this.lives = this.createIcons(startlives, spriteconfig.livespos, spriteconfig.livestexture, spriteconfig.scale, spriteconfig.distance);
-        this.rockets = this.createIcons(startrockets, spriteconfig.rocketspos, spriteconfig.rocketstexture, spriteconfig.scale, spriteconfig.distance)
-
+        this.rockets = this.createIcons(startrockets, spriteconfig.rocketspos, spriteconfig.rocketstexture, spriteconfig.scale, spriteconfig.distance);
     }
 
     /**
@@ -86,7 +95,7 @@ export default class UIElements extends Phaser.GameObjects.Sprite {
         for (let i = 0; i < amount; i++) {
             let icon = this.sprite = this.scene.physics.add.image(position.x + distance, position.y, texture);
             icon.setScale(scale);
-            icon.setDepth(1);
+            icon.setDepth(1); //Make sure icons are never overlapped by other objects
             distance += (spacing + icon.width);
             temparray.push(icon);
         }

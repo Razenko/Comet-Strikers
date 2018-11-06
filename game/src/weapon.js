@@ -7,6 +7,11 @@ import Util from './util.js'
  * @extends Phaser.GameObjects.Sprite
  * @constructor scene - The current Phaser.Scene
  * @constructor distance - The distance (spacing) between the individual elements
+ * @constructor delay - The total delay (interval) between firing, in order to prevent spamming.
+ * @constructor speed - The speed (velocity) of the element.
+ * @constructor texture - The texture to be used as sprite.
+ * @constructor scale - The scale (size) of the element.
+ * @constructor alpha - Set transparency.
  */
 export default class Weapon extends Phaser.GameObjects.Sprite {
     constructor(scene, distance, delay, speed, texture, scale, alpha) {
@@ -18,6 +23,7 @@ export default class Weapon extends Phaser.GameObjects.Sprite {
         this._delayCounter = 0;
         this._amount = null;
         this._speed = speed;
+        this._soundeffect = null;
         this._spriteConfig = {
             texture: texture,
             scale: scale,
@@ -101,6 +107,15 @@ export default class Weapon extends Phaser.GameObjects.Sprite {
         this._speed = value;
     }
 
+    //Sound
+    get soundeffect() {
+        return this._soundeffect;
+    }
+
+    set soundeffect(value) {
+        this._soundeffect = value;
+    }
+
 
     /**
      * Creates a given number of weapon objects.
@@ -138,13 +153,13 @@ export default class Weapon extends Phaser.GameObjects.Sprite {
         let purgebuffer = [];
         for (let element of this.elements) {
             this.scene.physics.velocityFromRotation(element.rotation, this.speed, element.body.velocity);
-            if (element.x < 0 || element.y < 0 || element.x > this.scene.cameras.main.width || element.y > this.scene.cameras.main.height) {
-                element.destroy();
-                purgebuffer.push(element);
+            if (element.x < 0 || element.y < 0 || element.x > this.scene.cameras.main.width || element.y > this.scene.cameras.main.height) { //Check if element if out of bounds
+                element.destroy(); //Destroy the element
+                purgebuffer.push(element); //Queue the element object for array removal
             }
         }
 
-        this.cleanElementArray(purgebuffer);
+        this.cleanElementArray(purgebuffer); //Remove all destroyed elements from array (to prevent unused objects from wasting resources).
     }
 
     /**
@@ -167,15 +182,18 @@ export default class Weapon extends Phaser.GameObjects.Sprite {
      * Fire!!
      */
     fire(ship_x, ship_y, ship_angle) {
-        if (this.amount == null || this.amount > 0) {
-            if (this.delayCounter < 1) {
-                this.create(ship_x, ship_y, ship_angle, 2, this.distance, this.spriteConfig.texture, this.spriteConfig.scale, this.spriteConfig.alpha);
-                this.delayCounter = this.delay;
+        if (this.amount == null || this.amount > 0) { //Check inventory (remaining elements) if exists.
+            if (this.delayCounter < 1) { //Current interval is over
+                this.create(ship_x, ship_y, ship_angle, 2, this.distance, this.spriteConfig.texture, this.spriteConfig.scale, this.spriteConfig.alpha); //Create a new element.
+                this.delayCounter = this.delay; //Reset delay interval
+                if (this.soundeffect != null) {
+                    this.soundeffect.play(); //Play the associated sound effect
+                }
                 if (this.amount != null) {
-                    this.amount--;
+                    this.amount--; //Reduce inventory
                 }
             }
-            this.delayCounter--;
+            this.delayCounter--; //Reduce delay interval
         }
     }
 
@@ -183,6 +201,6 @@ export default class Weapon extends Phaser.GameObjects.Sprite {
      * Cease firing!!
      */
     stopFire() {
-        this.delayCounter = 0;
+        this.delayCounter = 0; //Reset delay interval (when the player stops pressing the respective button)
     }
 }

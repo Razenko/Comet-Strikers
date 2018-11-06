@@ -48,12 +48,14 @@ export default class PlayerShip extends Phaser.GameObjects.Sprite {
         this._rockets = value;
     }
 
+    //RocketsAvailable
     get rocketsAvailable() {
         if (this.rockets != null) {
             return this.rockets.amount;
         }
     }
 
+    //TotalRockets
     get totalRockets() {
         return this._totalRockets;
     }
@@ -117,8 +119,8 @@ export default class PlayerShip extends Phaser.GameObjects.Sprite {
      * @method create
      */
     create() {
-        this.invulnerable = true;
-        let particles = this.scene.add.particles('blue');
+        this.invulnerable = true; //Start off indestructible so player wont immediately get smashed (grace period)
+        let particles = this.scene.add.particles('blue'); //Add particle emitter for exhaust trail
         this.shipEmitter = particles.createEmitter({
             speed: 1,
             scale: {start: 1, end: 0},
@@ -129,18 +131,18 @@ export default class PlayerShip extends Phaser.GameObjects.Sprite {
             on: false
         });
 
-        this.sprite = this.scene.physics.add.image(400, 400, 'ship');
-        this.sprite.setDamping(true);
-        this.sprite.setDrag(0.99);
-        this.sprite.setMaxVelocity(200);
-        this.sprite.setVelocity(0, 0);
-        this.sprite.setBounce(1, 1);
-        this.sprite.angle = -90;
-        this.sprite.setCollideWorldBounds(false);
-        this.emitterDeathZone = new Phaser.Geom.Circle(this.sprite.x, this.sprite.y, 50);
-        this.lasers = new Laser(this.scene, 58);
-        this.rockets = new Rocket(this.scene, 58, this.totalRockets);
-        this.setVulnerabilityState(this, 2000, false);
+        this.sprite = this.scene.physics.add.image(400, 400, 'ship'); //Create ship sprite
+        this.sprite.setDamping(true); //Make sure ship does not glide on forever
+        this.sprite.setDrag(0.99); //Prevent from stopping instantly
+        this.sprite.setMaxVelocity(200); //Maximum speed
+        this.sprite.setVelocity(0, 0); //Starting speed
+        this.sprite.setBounce(1, 1); //Give it some weight
+        this.sprite.angle = -90; //Set starting angle
+        this.sprite.setCollideWorldBounds(false); //Wont collide with playing field edges
+        this.emitterDeathZone = new Phaser.Geom.Circle(this.sprite.x, this.sprite.y, 50); //Create a zone which will block the emitter (to prevent ship and emitter overlap)
+        this.lasers = new Laser(this.scene, 58); //Create a pair of lasers with a distance of 58 pixels between them
+        this.rockets = new Rocket(this.scene, 58, this.totalRockets); //Create a limited number of rockets pairs (same distance again)
+        this.setVulnerabilityState(this, 2000, false); //Disable the grace period after two seconds
     }
 
     /**
@@ -148,7 +150,7 @@ export default class PlayerShip extends Phaser.GameObjects.Sprite {
      * @method update
      */
     update() {
-        this.scene.physics.world.wrap(this.sprite, 32);
+        this.scene.physics.world.wrap(this.sprite, 32); //Make sure the ship stays within the playing field
         let emitterPosition = Util.getAnglePos(30, this.sprite.angle, this.sprite.x, this.sprite.y);
         this.shipEmitter.setPosition(emitterPosition.x, emitterPosition.y);
         this.shipEmitter.setAngle(this.sprite.angle + 180);
@@ -249,31 +251,35 @@ export default class PlayerShip extends Phaser.GameObjects.Sprite {
         let explosion_x = this.sprite.x;
         let explosion_y = this.sprite.y;
 
+        //Destroy the ship
         this.sprite.destroy();
         this.shipEmitter.on = false;
         this.stopFireLasers();
         this.stopFireRockets();
 
-        let particles = this.scene.add.particles('blue');
+        //Create particle emitter explosion
+        let particles = this.scene.add.particles('fire');
         let explosion = particles.createEmitter({
-            speed: 50,
-            scale: {start: 1, end: 0},
+            speed: 100,
+            scale: {start: 0.5, end: 0},
             x: explosion_x,
             y: explosion_y,
             alpha: 0.5,
-            blendMode: 'ADD',
-            lifespan: 5000,
-            quantity: 200,
+            blendMode: 'SCREEN',
+            lifespan: 3000,
+            quantity: 100,
             on: true
         });
-        this.scene.time.delayedCall(2000, function () {
+
+        //Disable particle emitter after a second
+        this.scene.time.delayedCall(1000, function () {
             explosion.on = false;
         });
     }
 
 
     /**
-     * Set the vulnerability of the ship (invulnerable is false, vulnerable is true)
+     * Set the vulnerability of the ship
      * @param self - The current scope (this class)
      * @param delay - Delay in milliseconds until the parameter is passed through
      * @param state - The new vulnerability state (boolean)

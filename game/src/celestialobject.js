@@ -6,13 +6,15 @@ import Util from './util.js'
  * @class CelestialObject
  * @extends Phaser.GameObjects.Sprite
  * @constructor scene - The current Phaser.Scene
- * @constructor object_type - The object type (asteroid or comet, boolean)
  * @constructor level - The current level as integer (for difficulty modifiers)
- * @constructor ship_x - The ship's x-axis
- * @constructor ship_y - The ship's y-axis
+ * @constructor name - The name of the object
+ * @constructor texture - The texture to be used as sprite
+ * @constructor spawnpoint - A predefined spawnpoint, set null for random spawn location.
+ * @constructor scale - A predefined scale, set null for random scale.
+ * @constructor rotation - The speed of rotation, set null for random rotation value.
+ * @constructor ship - The location of the ship.
  */
 export default class CelestialObject extends Phaser.GameObjects.Sprite {
-
     constructor(scene, level, name, texture, spawnpoint, scale, rotation, ship) {
         super(scene);
         this._scene = scene;
@@ -23,7 +25,7 @@ export default class CelestialObject extends Phaser.GameObjects.Sprite {
             texture: texture,
             spawnpoint: spawnpoint,
             scale: scale,
-            sizeBoundaries: {min: 35, max: 65},
+            sizeBoundaries: {min: 0, max: 100},
             rotation: rotation,
             ship: ship
         }
@@ -60,6 +62,7 @@ export default class CelestialObject extends Phaser.GameObjects.Sprite {
         this._level = value;
     }
 
+    //Name
     get name() {
         return this._name;
     }
@@ -82,30 +85,30 @@ export default class CelestialObject extends Phaser.GameObjects.Sprite {
      */
     create() {
         if (this.spriteConfig.spawnpoint == null) {
-            this.spriteConfig.spawnpoint = CelestialObject.getSafeSpawnpoint(this.spriteConfig.ship.x, this.spriteConfig.ship.y);
+            this.spriteConfig.spawnpoint = CelestialObject.getSafeSpawnpoint(this.spriteConfig.ship.x, this.spriteConfig.ship.y); //Create random spawnpoint if none is given
         }
         if (this.spriteConfig.scale == null) {
-            this.spriteConfig.scale = Util.getRandomInt(this.spriteConfig.sizeBoundaries.min, this.spriteConfig.sizeBoundaries.max) / 100;
+            this.spriteConfig.scale = Util.getRandomInt(this.spriteConfig.sizeBoundaries.min, this.spriteConfig.sizeBoundaries.max) / 100; //Create random sprite scale if none is given (within predetermined boundaries)
         }
         if (this.spriteConfig.rotation == null) {
-            this.spriteConfig.rotation = Util.getRandomInt(-20, 20) / 10;
+            this.spriteConfig.rotation = Util.getRandomInt(-20, 20) / 10; //Create random rotation value if none is given
         }
-        this.sprite = this.scene.physics.add.image(this.spriteConfig.spawnpoint.x, this.spriteConfig.spawnpoint.y, this.spriteConfig.texture);
+        this.sprite = this.scene.physics.add.image(this.spriteConfig.spawnpoint.x, this.spriteConfig.spawnpoint.y, this.spriteConfig.texture); //Create sprite
         this.sprite.name = this.name;
-        this.sprite.setCircle(70);
+        this.sprite.setCircle(70); //Set boundaries for collision detection
         this.sprite.setScale(this.spriteConfig.scale);
-        this.sprite.setMaxVelocity(200);
-        this.sprite.setVelocity(CelestialObject.getValidRandomVelocity(), CelestialObject.getValidRandomVelocity());
-        this.sprite.setBounce(1, 1);
-        this.sprite.setCollideWorldBounds(false);
+        this.sprite.setMaxVelocity(200); //Set maximum velocity (speed)
+        this.sprite.setVelocity(CelestialObject.getValidRandomVelocity(), CelestialObject.getValidRandomVelocity()); //Create a random velocity value within predetermined parameters.
+        this.sprite.setBounce(1, 1); //Give it some weight
+        this.sprite.setCollideWorldBounds(false); //Disallow colliding with the edges of the playing field
     }
 
     /**
      * Update the position and rotation of the asteroid or comet.
      */
     update() {
-        this.sprite.angle += this.spriteConfig.rotation;
-        this.scene.physics.world.wrap(this.sprite, 64);
+        this.sprite.angle += this.spriteConfig.rotation; //Update the rotation
+        this.scene.physics.world.wrap(this.sprite, 64); //Keep it within the playing field
     }
 
     /**

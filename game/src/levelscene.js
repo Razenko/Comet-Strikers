@@ -3,6 +3,7 @@ import PlayerShip from './playership.js'
 import Asteroid from './asteroid.js'
 import Comet from './comet.js'
 import UIElements from './uielements.js'
+import MusicPlayer from './musicplayer.js'
 
 /**
  * @classdesc
@@ -31,7 +32,14 @@ export default class LevelScene extends Phaser.Scene {
             childasteroids: 0,
             comets: 0
         };
+        this._soundeffects = {
+            explosion: null,
+            gameover: null,
+            ship_explode: null,
+            small_explosion: null
+        };
         this._ui = null;
+        this._musicplayer = null;
     }
 
     /**
@@ -137,62 +145,113 @@ export default class LevelScene extends Phaser.Scene {
         this._ui = value;
     }
 
+    //Soundeffects
+    get soundeffects() {
+        return this._soundeffects;
+    }
+
+    set soundeffects(value) {
+        this._soundeffects = value;
+    }
+
+    //Musicplayer
+    get musicplayer() {
+        return this._musicplayer;
+    }
+
+    set musicplayer(value) {
+        this._musicplayer = value;
+    }
+
 
     /**
      * Preload game data, such as sprite graphics and sounds.
      * @method preload
      */
     preload() {
-        this.load.image('bg1', './game/assets/earth1.jpg');
-        this.load.image('bg2', './game/assets/earth2.jpg');
-        this.load.image('bg3', './game/assets/earth3.jpg');
-        this.load.image('ship', './game/assets/ship.png');
-        this.load.image('ship_icon', './game/assets/ship_icon.png');
-        this.load.image('blue', './game/assets/blue_particle.png');
-        this.load.image('asteroid1', './game/assets/asteroid1.png');
-        this.load.image('asteroid2', './game/assets/asteroid2.png');
-        this.load.image('comet1', './game/assets/comet1.png');
-        this.load.image('laser', './game/assets/laser.png');
-        this.load.image('rocket', './game/assets/rocket.png');
-        this.load.image('rocket_icon', './game/assets/rocket_icon.png');
-        this.load.image('gameover', './game/assets/gameover.png');
-        this.load.spritesheet('explosion', './game/assets/explosion.png', {
+        //Textures
+        this.load.image('bg1', './game/assets/textures/earth1.jpg');
+        this.load.image('bg2', './game/assets/textures/earth2.jpg');
+        this.load.image('bg3', './game/assets/textures/earth3.jpg');
+        this.load.image('ship', './game/assets/textures/ship.png');
+        this.load.image('ship_icon', './game/assets/textures/ship_icon.png');
+        this.load.image('blue', './game/assets/textures/blue_particle.png');
+        this.load.image('fire', './game/assets/textures/fire_particle.png');
+        this.load.image('asteroid1', './game/assets/textures/asteroid1.png');
+        this.load.image('asteroid2', './game/assets/textures/asteroid2.png');
+        this.load.image('comet1', './game/assets/textures/comet1.png');
+        this.load.image('laser', './game/assets/textures/laser.png');
+        this.load.image('rocket', './game/assets/textures/rocket.png');
+        this.load.image('rocket_icon', './game/assets/textures/rocket_icon.png');
+        this.load.image('gameover', './game/assets/textures/gameover.png');
+        this.load.spritesheet('explosion', './game/assets/textures/explosion.png', {
             frameWidth: 128,
             frameHeight: 128,
             endFrame: 16
         });
+
+        //Sound
+        this.load.audio('laser', ['./game/assets/sound/laser.mp3']);
+        this.load.audio('rocket', ['./game/assets/sound/rocket.mp3']);
+        this.load.audio('explosion', ['./game/assets/sound/explosion.mp3']);
+        this.load.audio('small_explosion', ['./game/assets/sound/small_explosion.mp3']);
+        this.load.audio('ship_explode', ['./game/assets/sound/ship_explode.mp3']);
+        this.load.audio('gameover', ['./game/assets/sound/gameover.mp3']);
+
+
+        //Music
+        this.load.binary('tune1', './game/assets/music/tune1.sid');
+        this.load.binary('tune2', './game/assets/music/tune2.sid');
+        this.load.binary('tune3', './game/assets/music/tune3.sid');
+        this.load.binary('tune4', './game/assets/music/tune4.sid');
+
+        //C64 SID player plugin
+        this.load.plugin('SIDPlayerPlugin', './lib/js/plugins/sidplayer.min.js', true);
     }
 
     /**
-     * Create the elements of the level, such as: the background image, the player's ship, the asteroids/comets and the input handlers.
+     * Create the elements of this level, such as: the background image, the player's ship, the asteroids/comets and the input handlers.
      * @method create
      */
     create() {
-        this.add.image(400, 300, LevelScene.getRandomBackgroundImage());
-        this.ship = new PlayerShip(this, 3);
-        this.createAsteroids(3 + this.level, this.level, this.ship.sprite.x, this.ship.sprite.y, this);
-        this.createComets(this.level - 1, this.level, this.ship.sprite.x, this.ship.sprite.y, this);
+        this.add.image(400, 300, LevelScene.getRandomBackgroundImage()); //Set random background image
+        this.ship = new PlayerShip(this, 3); //Add a player controlled ship with three rockets
+        this.createAsteroids(3 + this.level, this.level, this.ship.sprite.x, this.ship.sprite.y, this); //Create the asteroids
+        this.createComets(this.level - 1, this.level, this.ship.sprite.x, this.ship.sprite.y, this); //Create the comets
         this.objecttracker.asteroids = this.asteroids.length;
         this.objecttracker.comets = this.comets.length;
+
+        //Create the UI:
         this.ui = new UIElements(this, this.lives, this.ship.totalRockets, {x: 50, y: 30}, {
             x: 670,
             y: 30
         }, 'ship_icon', 'rocket_icon', 1, 10);
         this.ui.displayLevel("Level " + this.level);
 
+        this.musicplayer = new MusicPlayer(this); //Create a new music player
+        this.musicplayer.playRandom();  //Play a random tune
+
+        //Add sound effects:
+        this.soundeffects.explosion = this.sound.add('explosion');
+        this.soundeffects.gameover = this.sound.add('gameover');
+        this.soundeffects.ship_explode = this.sound.add('ship_explode');
+        this.soundeffects.small_explosion = this.sound.add('small_explosion');
+
+        //Bind controls:
         this.controls = {
             cursors: this.input.keyboard.createCursorKeys(),
             space: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE),
             ctrl: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.CTRL)
         };
 
+        //Configure explosion animation:
         let explosion = {
             key: 'explode',
             frames: this.anims.generateFrameNumbers('explosion', {start: 0, end: 16, first: 16}),
             frameRate: 20
         };
 
-        this.anims.create(explosion);
+        this.anims.create(explosion); //Add the explosion to the animations list
     }
 
     /**
@@ -262,7 +321,7 @@ export default class LevelScene extends Phaser.Scene {
                 this.checkInput();
                 this.ship.update();
                 this.checkCollisionsAndUpdate();
-                this.updateUI();
+                this.updateRocketUI();
             }
             else {
                 this.updateCelestialObjects();
@@ -362,9 +421,9 @@ export default class LevelScene extends Phaser.Scene {
     }
 
     /**
-     * Update UI changes
+     * Update the UI with the remaining rockets
      */
-    updateUI() {
+    updateRocketUI() {
         if (this.ui.rockets.length > this.ship.rocketsAvailable) {
             this.ui.decreaseRockets(1);
         }
@@ -385,15 +444,24 @@ export default class LevelScene extends Phaser.Scene {
 
         //lose
         if (this.lives < 1) {
-            this.active = false;
-            this.ui.gameoverMessage("All of your ships were destroyed!!")
+            this.gameoverEvent("All of your ships were destroyed!!")
         }
 
         if (this.ship.rocketsAvailable < 1 && this.ship.rockets.rockets.length < 1 && this.objecttracker.comets > 0 && this.alive) {
-            this.active = false;
-            this.ui.gameoverMessage("No rockets left to kill the remaining comet(s)");
+            this.gameoverEvent("No rockets left to kill the remaining comet(s)")
         }
 
+    }
+
+    /**
+     * If the player destroys all their ships or does not have enough rockets left to destroy the remaining comets, it's game over.
+     * @param message - Message to be displayed underneath the game over text
+     */
+    gameoverEvent(message) {
+        this.active = false;
+        this.ui.gameoverMessage(message);
+        this.soundeffects.gameover.play();
+        this.restartGame(5000);
     }
 
     /**
@@ -407,6 +475,7 @@ export default class LevelScene extends Phaser.Scene {
             this.ship.explode();
             this.lives--;
             this.ui.decreaseLives(1);
+            this.soundeffects.ship_explode.play();
             this.shipSpawn(this, 3000);
         }
     }
@@ -418,7 +487,7 @@ export default class LevelScene extends Phaser.Scene {
      */
     onLaserAsteroidCollisionEvent(asteroidSprite, laser) {
         this.explosion(asteroidSprite.x, asteroidSprite.y, asteroidSprite.scaleX * 2);
-        let modifier = 0;
+        let modifier = 0; //Modifier is used to create somewhat matching child asteroids
         if (asteroidSprite.scaleX < 0.5) {
             modifier = 2;
         } else {
@@ -488,6 +557,11 @@ export default class LevelScene extends Phaser.Scene {
     explosion(x, y, scale) {
         let explosion = this.add.sprite(x, y, 'explosion');
         explosion.setScale(scale);
+        if (scale < 0.35) {
+            this.soundeffects.small_explosion.play();
+        } else {
+            this.soundeffects.explosion.play();
+        }
         explosion.anims.play('explode');
     }
 
@@ -508,20 +582,30 @@ export default class LevelScene extends Phaser.Scene {
     }
 
     /**
+     * Restart the game.
+     * @param delay - Delay in milliseconds before restarting.
+     */
+    restartGame(delay) {
+        this.time.delayedCall(delay, function () {
+            window.location.reload(false);
+        });
+    }
+
+    /**
      * Return a random asteroid texture from array
-     * @returns {string} - return value
+     * @returns {string} - Random asteroid texture
      */
     static getRandomAsteroidTexture() {
         let textures = ['asteroid1', 'asteroid2'];
-        return textures[Util.getRandomInt(0, 1)];
+        return textures[Util.getRandomInt(0, textures.length - 1)];
     }
 
     /**
      * Return a random background image
-     * @returns {string} - return value
+     * @returns {string} - Random background image
      */
     static getRandomBackgroundImage() {
         let images = ['bg1', 'bg2', 'bg3'];
-        return images[Util.getRandomInt(0, 2)];
+        return images[Util.getRandomInt(0, images.length - 1)];
     }
 }

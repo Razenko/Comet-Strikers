@@ -15,8 +15,31 @@ Uses the Phaser version 3.15 game framework.
  -->
 <!--<script src="lib/js/phaser.js"></script> &lt;!&ndash;debug phaser lib&ndash;&gt;-->
 <script src="lib/js/phaser.min.js"></script> <!-- live phaser lib-->
-<script type="module" src="game/cometstrikers.js"></script>
-<body>
+<style>
+    body {
+        background: #ffffff url("./img/bg.jpg") no-repeat right top;
+    }
 
+    #logo {
+        position: absolute;
+        left: 50%;
+        top: 10%;
+        transform: translate(-50%, -90%);
+    }
+
+    #comet-strikers {
+        background: #000000;
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        border: 3px solid white;
+        border-radius: 5px;
+    }
+</style>
+<body>
+<div id="logo"><img src="./img/cs_logo.png" alt="Comet Strikers"></div>
+<div id="comet-strikers"><!-- Placeholder for Phaser 3 output --></div>
 </body>
+<script type="module" src="game/loader.js"></script> <!-- Run the game -->
 </html>
